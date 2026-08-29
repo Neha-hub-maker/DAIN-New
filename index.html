@@ -1,0 +1,2143 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="DAIN - DUNITE Achievement & Impact Network. Official PR & Media Amplification Platform for Dhaka University Students, Alumni, and Faculty." />
+  <title>DAIN | DUNITE Achievement & Impact Network</title>
+
+  <!-- Tailwind CSS with Forms & Container Queries -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "border-overlay": "rgba(255,255,255,0.1)",
+            "border-subtle": "rgba(255,255,255,0.06)",
+            "surface-container": "#1e2024",
+            "surface-container-high": "#282a2e",
+            "surface-container-highest": "#333539",
+            "surface-container-lowest": "#0c0e12",
+            "surface-navy": "#000A1E",
+            "on-surface": "#e2e2e8",
+            "on-surface-variant": "#c5c6cd",
+            "dunite-red": "#BE0000",
+            "dunite-red-glow": "rgba(190, 0, 0, 0.35)",
+            "academic-gold": "#FED488",
+            "academic-gold-glow": "rgba(254, 212, 136, 0.25)",
+            "primary": "#bac7e2",
+            "error": "#ffb4ab",
+            "sector-academic": "#38bdf8",
+            "sector-professional": "#34d399",
+            "sector-entrepreneurial": "#fbbf24",
+            "sector-social": "#a78bfa",
+            "sector-personal": "#f472b6"
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            md: "0.375rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"],
+            display: ["Public Sans", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Google Fonts: Inter, Public Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Public+Sans:wght@600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <!-- Material Symbols Outlined -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    * { box-sizing: border-box; }
+    html { color-scheme: dark; scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Inter", sans-serif;
+      background: #000A1E;
+      color: #e2e2e8;
+      overflow-x: hidden;
+    }
+    h1, h2, h3, h4, h5, h6 { font-family: "Public Sans", sans-serif; }
+    .font-mono { font-family: "JetBrains Mono", monospace; }
+
+    button, input, select, textarea { font: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 2px solid #FED488;
+      outline-offset: 2px;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      vertical-align: middle;
+    }
+
+    /* Smooth View Transition Animations */
+    .view-panel {
+      display: none;
+      animation: viewIn 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .view-panel.active { display: block; }
+    @keyframes viewIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Sidebar Navigation item active state */
+    .nav-item {
+      border-left: 3px solid transparent;
+      transition: all 180ms ease;
+    }
+    .nav-item:hover {
+      color: #FED488;
+      background: #1e2024;
+    }
+    .nav-item.active {
+      color: #ffffff;
+      border-left-color: #BE0000;
+      background: #282a2e;
+    }
+    .nav-item.active .material-symbols-outlined {
+      color: #FED488;
+      font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24;
+    }
+
+    /* Stepper progress line */
+    .progress-line::after {
+      content: "";
+      position: absolute;
+      top: 20px;
+      left: calc(50% + 22px);
+      width: calc(100% - 44px);
+      height: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: 0;
+    }
+    .progress-line:last-child::after { display: none; }
+
+    .journey-step.state-complete .journey-circle {
+      color: #FED488;
+      border-color: #FED488;
+      background: rgba(254, 212, 136, 0.1);
+    }
+    .journey-step.state-active .journey-circle {
+      width: 44px;
+      height: 44px;
+      margin-top: -2px;
+      color: white;
+      border-color: #BE0000;
+      background: #BE0000;
+      box-shadow: 0 0 20px rgba(190, 0, 0, 0.5);
+    }
+    .journey-step.state-active .journey-label {
+      color: #FED488;
+      font-weight: 700;
+    }
+
+    /* Wizard dots */
+    .form-step { display: none; animation: viewIn 200ms ease-out; }
+    .form-step.active { display: block; }
+    .form-dot.active {
+      color: white;
+      border-color: #BE0000;
+      background: #BE0000;
+      box-shadow: 0 0 12px rgba(190, 0, 0, 0.4);
+    }
+    .form-dot.complete {
+      color: #FED488;
+      border-color: #FED488;
+      background: rgba(254, 212, 136, 0.1);
+    }
+
+    /* 3-Stage Validation Pipeline Tracks */
+    .validation-track {
+      display: grid;
+      grid-template-columns: 1fr 50px 1fr 50px 1fr;
+      align-items: stretch;
+      gap: 12px;
+    }
+    .validation-stage {
+      min-height: 190px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #111318;
+      transition: all 280ms ease;
+    }
+    .validation-stage .stage-node {
+      width: 44px;
+      height: 44px;
+      color: #8f9097;
+      border: 2px solid rgba(255, 255, 255, 0.16);
+      background: #000A1E;
+      transition: all 280ms ease;
+    }
+    .validation-stage.active {
+      border-color: #BE0000;
+      background: linear-gradient(145deg, rgba(190, 0, 0, 0.15), #111318 65%);
+      transform: translateY(-3px);
+      box-shadow: 0 0 24px rgba(190, 0, 0, 0.25);
+    }
+    .validation-stage.active .stage-node {
+      color: white;
+      border-color: #BE0000;
+      background: #BE0000;
+      box-shadow: 0 0 16px rgba(190, 0, 0, 0.6);
+    }
+    .validation-stage.complete {
+      border-color: rgba(254, 212, 136, 0.5);
+    }
+    .validation-stage.complete .stage-node {
+      color: #FED488;
+      border-color: #FED488;
+      background: rgba(254, 212, 136, 0.12);
+    }
+
+    .validation-connector {
+      position: relative;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+    .validation-connector::before {
+      content: "";
+      width: 100%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .validation-connector::after {
+      content: "";
+      position: absolute;
+      left: -100%;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #FED488, #BE0000);
+    }
+    .validation-connector.active::after {
+      animation: connectorFlow 850ms ease forwards;
+    }
+    .validation-connector.complete::before {
+      background: rgba(254, 212, 136, 0.5);
+    }
+    @keyframes connectorFlow { to { left: 100%; } }
+
+    /* Badges & Status Chips */
+    .status-chip { border: 1px solid; }
+    .status-approved {
+      color: #86efac;
+      border-color: rgba(34, 197, 94, 0.35);
+      background: rgba(34, 197, 94, 0.1);
+    }
+    .status-review {
+      color: #FED488;
+      border-color: rgba(254, 212, 136, 0.35);
+      background: rgba(254, 212, 136, 0.1);
+    }
+    .status-draft {
+      color: #c5c6cd;
+      border-color: rgba(197, 198, 205, 0.25);
+      background: rgba(197, 198, 205, 0.08);
+    }
+
+    /* Toast Notification */
+    .toast {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(16px);
+      transition: all 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .toast.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    /* Modal Backdrop */
+    dialog::backdrop {
+      background: rgba(0, 5, 20, 0.85);
+      backdrop-filter: blur(6px);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0c0e12; }
+    ::-webkit-scrollbar-thumb { background: #333539; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #BE0000; }
+
+    @media (max-width: 1023px) {
+      #sidebar { transform: translateX(-100%); transition: transform 240ms ease; }
+      #sidebar.open { transform: translateX(0); }
+      .sidebar-scrim.open { display: block; }
+      #topbar { left: 0; width: 100%; }
+      #main-content { width: 100%; margin-left: 0; padding: 20px 16px 36px; }
+      .validation-track { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body class="bg-surface-navy text-on-surface min-h-screen">
+  <!-- Mobile Scrim Overlay -->
+  <div id="sidebar-scrim" class="sidebar-scrim fixed inset-0 bg-black/75 z-40 hidden" aria-hidden="true"></div>
+
+  <!-- ============================================================== -->
+  <!-- SIDEBAR NAVIGATION                                             -->
+  <!-- ============================================================== -->
+  <nav
+    id="sidebar"
+    aria-label="Main navigation"
+    class="bg-surface-navy fixed left-0 top-0 h-screen w-[270px] bg-gradient-to-b from-surface-navy to-surface-container-lowest border-r border-border-overlay flex flex-col py-4 px-3 z-50 overflow-y-auto"
+  >
+    <!-- Brand Header with DUNITE Logo -->
+    <div class="flex items-center gap-3 mb-6 p-2 rounded-xl bg-surface-container-lowest/60 border border-border-overlay">
+      <img
+        alt="DUNITE Logo"
+        class="w-10 h-10 rounded-lg shadow-md object-contain border border-border-overlay"
+        src="assets/dunite-logo.png"
+        onerror="this.src='https://raw.githubusercontent.com/Neha-hub-maker/DAIN/main/assets/dunite-logo.png'"
+      />
+      <div class="min-w-0">
+        <div class="flex items-center gap-1.5">
+          <h1 class="font-display text-lg font-bold tracking-tight text-white">DAIN</h1>
+          <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-dunite-red text-white font-mono">PR HUB</span>
+        </div>
+        <p class="text-xs text-on-surface-variant truncate">Dhaka University Ecosystem</p>
+      </div>
+      <button id="close-sidebar" class="ml-auto lg:hidden p-1 text-on-surface-variant hover:text-academic-gold" aria-label="Close navigation">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <!-- Navigation Menu Items -->
+    <div class="flex-1 space-y-1">
+      <p class="text-[11px] uppercase tracking-wider text-on-surface-variant font-mono px-3 py-1 font-semibold">Core Platform</p>
+      
+      <button class="nav-item active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant" data-view="home">
+        <span class="material-symbols-outlined text-xl">home</span>
+        <span class="font-medium">Discovery &amp; Home</span>
+      </button>
+
+      <button class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant" data-view="submit">
+        <span class="material-symbols-outlined text-xl">add_circle</span>
+        <span class="font-medium">Submit Story &amp; Proof</span>
+      </button>
+
+      <button class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant" data-view="stories">
+        <span class="material-symbols-outlined text-xl">newspaper</span>
+        <span class="font-medium">Verified Stories Hub</span>
+      </button>
+
+      <div class="pt-3">
+        <p class="text-[11px] uppercase tracking-wider text-on-surface-variant font-mono px-3 py-1 font-semibold">5 Core Sectors</p>
+        
+        <button class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-on-surface-variant hover:text-sector-academic" data-view="academic">
+          <span class="material-symbols-outlined text-lg text-sector-academic">school</span>
+          <span>Academic &amp; Research</span>
+        </button>
+
+        <button class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-on-surface-variant hover:text-sector-professional" data-view="professional">
+          <span class="material-symbols-outlined text-lg text-sector-professional">work</span>
+          <span>Professional Placements</span>
+        </button>
+
+        <button class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-on-surface-variant hover:text-sector-entrepreneurial" data-view="entrepreneurial">
+          <span class="material-symbols-outlined text-lg text-sector-entrepreneurial">rocket_launch</span>
+          <span>Startups &amp; Ventures</span>
+        </button>
+
+        <button class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-on-surface-variant hover:text-sector-social" data-view="social-impact">
+          <span class="material-symbols-outlined text-lg text-sector-social">volunteer_activism</span>
+          <span>Social Impact &amp; NGO</span>
+        </button>
+
+        <button class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-on-surface-variant hover:text-sector-personal" data-view="personal">
+          <span class="material-symbols-outlined text-lg text-sector-personal">military_tech</span>
+          <span>Personal Milestones</span>
+        </button>
+      </div>
+
+      <div class="pt-3">
+        <p class="text-[11px] uppercase tracking-wider text-on-surface-variant font-mono px-3 py-1 font-semibold">Network &amp; Admin</p>
+        
+        <button class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-on-surface-variant" data-view="distribution">
+          <span class="material-symbols-outlined text-lg text-academic-gold">hub</span>
+          <span>100+ Media Network</span>
+        </button>
+
+        <button class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-on-surface-variant" data-view="admin">
+          <span class="material-symbols-outlined text-lg text-dunite-red">rate_review</span>
+          <span>Editorial Review</span>
+        </button>
+
+        <button class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-on-surface-variant" data-view="analytics">
+          <span class="material-symbols-outlined text-lg">insights</span>
+          <span>Reach Analytics</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sidebar Footer & Auth Status -->
+    <div class="mt-auto pt-4 border-t border-border-overlay space-y-2">
+      <div id="sidebar-auth-card" class="p-3 rounded-xl bg-surface-container-high border border-border-overlay flex items-center justify-between">
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="w-7 h-7 rounded-full bg-academic-gold/20 text-academic-gold flex items-center justify-center font-bold text-xs">DU</div>
+          <div class="min-w-0">
+            <p class="text-xs font-semibold text-white truncate" id="sidebar-user-name">DU Contributor</p>
+            <p class="text-[10px] text-green-400 font-mono flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>@du.ac.bd Verified
+            </p>
+          </div>
+        </div>
+        <button class="nav-item p-1.5 rounded-lg text-on-surface-variant hover:text-white" data-view="auth" title="Switch Account">
+          <span class="material-symbols-outlined text-base">swap_horiz</span>
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-on-surface-variant px-2">
+        <button class="hover:text-academic-gold transition-colors" onclick="switchView('about')">About</button>
+        <span>•</span>
+        <button class="hover:text-academic-gold transition-colors" onclick="switchView('support')">Support</button>
+        <span>•</span>
+        <button class="hover:text-academic-gold transition-colors" onclick="switchView('settings')">Settings</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================================================== -->
+  <!-- TOPBAR HEADER                                                  -->
+  <!-- ============================================================== -->
+  <header
+    id="topbar"
+    class="bg-surface-container/90 backdrop-blur-md fixed top-0 right-0 w-[calc(100%-270px)] border-b border-border-overlay flex justify-between items-center h-16 px-4 md:px-8 z-30 transition-all"
+  >
+    <div class="flex items-center gap-3 min-w-0">
+      <button id="open-sidebar" class="lg:hidden p-2 text-on-surface-variant hover:text-academic-gold" aria-label="Open navigation">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-mono text-academic-gold uppercase tracking-wider hidden sm:inline" id="topbar-crumb">DAIN //</span>
+        <h2 id="view-title" class="font-display text-base md:text-lg font-bold tracking-tight text-white truncate">
+          Discovery &amp; Home
+        </h2>
+      </div>
+    </div>
+
+    <!-- Search & Action Bar -->
+    <div class="flex items-center gap-3 md:gap-4">
+      <div class="relative hidden md:block w-72">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
+        <input
+          id="global-search"
+          type="search"
+          placeholder="Search verified achievements, news, alumni..."
+          class="w-full bg-surface-navy border border-border-overlay rounded-lg py-1.5 pl-9 pr-3 text-xs text-on-surface focus:border-academic-gold transition-colors"
+        />
+      </div>
+
+      <button
+        onclick="switchView('submit')"
+        class="hidden sm:flex items-center gap-1.5 bg-dunite-red hover:bg-red-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors shadow-lg shadow-dunite-red/20"
+      >
+        <span class="material-symbols-outlined text-base">publish</span>
+        <span>Share Story</span>
+      </button>
+
+      <!-- Notification Trigger -->
+      <div class="relative">
+        <button
+          id="notifications-button"
+          class="text-on-surface-variant hover:text-academic-gold p-2 rounded-full hover:bg-surface-container-highest relative transition-colors"
+          aria-label="Notifications"
+        >
+          <span class="material-symbols-outlined text-xl">notifications</span>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-dunite-red animate-pulse"></span>
+        </button>
+      </div>
+
+      <!-- User Account Trigger -->
+      <button
+        onclick="switchView('auth')"
+        class="flex items-center gap-2 p-1.5 rounded-lg border border-border-overlay bg-surface-navy hover:border-academic-gold/50 transition-colors"
+        aria-label="Account details"
+      >
+        <div class="w-6 h-6 rounded-full bg-academic-gold/20 text-academic-gold flex items-center justify-center font-bold text-xs">
+          DU
+        </div>
+        <span class="text-xs font-medium text-white hidden md:inline">Account</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================================== -->
+  <!-- MAIN CONTENT VIEWS CONTAINER                                   -->
+  <!-- ============================================================== -->
+  <main
+    id="main-content"
+    class="ml-[270px] mt-16 p-4 md:p-8 w-[calc(100%-270px)] min-h-[calc(100vh-64px)] bg-surface-navy transition-all"
+  >
+    <div class="max-w-7xl mx-auto space-y-8">
+
+      <!-- ------------------------------------------------------------ -->
+      <!-- VIEW 1: HOME & DISCOVERY PORTAL                              -->
+      <!-- ------------------------------------------------------------ -->
+      <section id="view-home" class="view-panel active space-y-10">
+        <!-- Hero Banner -->
+        <div class="relative overflow-hidden rounded-2xl border border-border-overlay bg-gradient-to-br from-surface-container-lowest via-surface-navy to-surface-container p-6 md:p-12 shadow-2xl">
+          <div class="absolute -right-16 -bottom-16 w-80 h-80 rounded-full bg-dunite-red/10 blur-3xl pointer-events-none"></div>
+          <div class="absolute top-0 right-0 p-8 opacity-10 hidden lg:block">
+            <img src="assets/dunite-logo.png" class="w-64 h-64 object-contain" alt="DUNITE Watermark" />
+          </div>
+
+          <div class="relative z-10 max-w-3xl space-y-4">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-academic-gold/30 bg-academic-gold/5 text-academic-gold text-xs font-mono">
+              <span class="w-2 h-2 rounded-full bg-academic-gold animate-ping"></span>
+              Official PR Infrastructure for Dhaka University
+            </div>
+
+            <h1 class="font-display text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+              Bridging the Visibility Gap for <span class="bg-gradient-to-r from-academic-gold via-white to-dunite-red bg-clip-text text-transparent">Dhaka University's</span> Ecosystem
+            </h1>
+
+            <p class="text-sm sm:text-base text-on-surface-variant leading-relaxed max-w-2xl">
+              DU produces thousands of achievements annually across academia, research, corporate leadership, and public impact. DAIN systematically captures, AI-verifies, and distributes these success stories across 100+ national &amp; digital media outlets.
+            </p>
+
+            <div class="flex flex-wrap items-center gap-3 pt-2">
+              <button
+                onclick="switchView('submit')"
+                class="bg-dunite-red hover:bg-red-700 text-white px-6 py-3 rounded-lg text-sm font-semibold uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-dunite-red/30 hover:scale-[1.02]"
+              >
+                <span class="material-symbols-outlined text-lg">edit_document</span>
+                <span>Submit Your Story with Proof</span>
+              </button>
+
+              <button
+                onclick="switchView('stories')"
+                class="border border-border-overlay hover:border-academic-gold/60 text-on-surface hover:text-white px-5 py-3 rounded-lg text-sm font-medium transition-all bg-surface-container-high/40 hover:bg-surface-container-high"
+              >
+                <span>Explore Verified Press Releases</span>
+              </button>
+
+              <button
+                onclick="switchView('distribution')"
+                class="text-xs text-academic-gold hover:underline font-mono ml-2 flex items-center gap-1"
+              >
+                <span>View 100+ Media Network &rarr;</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric Stat Strip -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-5 rounded-xl bg-surface-container-lowest border border-border-overlay flex flex-col justify-between">
+            <span class="text-xs uppercase font-mono text-on-surface-variant">Media Distribution</span>
+            <div class="text-3xl font-display font-bold text-academic-gold mt-2">100+ Outlets</div>
+            <p class="text-[11px] text-on-surface-variant mt-1">National TV, Dailies &amp; Tech Portals</p>
+          </div>
+
+          <div class="p-5 rounded-xl bg-surface-container-lowest border border-border-overlay flex flex-col justify-between">
+            <span class="text-xs uppercase font-mono text-on-surface-variant">Stories Amplified</span>
+            <div class="text-3xl font-display font-bold text-white mt-2">2,840+</div>
+            <p class="text-[11px] text-green-400 mt-1">&uarr; 34% volume this semester</p>
+          </div>
+
+          <div class="p-5 rounded-xl bg-surface-container-lowest border border-border-overlay flex flex-col justify-between">
+            <span class="text-xs uppercase font-mono text-on-surface-variant">Verification Protocol</span>
+            <div class="text-3xl font-display font-bold text-dunite-red mt-2">3-Stage</div>
+            <p class="text-[11px] text-on-surface-variant mt-1">Automated &bull; Editorial &bull; Media Routing</p>
+          </div>
+
+          <div class="p-5 rounded-xl bg-surface-container-lowest border border-border-overlay flex flex-col justify-between">
+            <span class="text-xs uppercase font-mono text-on-surface-variant">DU Community Reach</span>
+            <div class="text-3xl font-display font-bold text-primary mt-2">100% Verified</div>
+            <p class="text-[11px] text-on-surface-variant mt-1">Students, Alumni &amp; Faculty Members</p>
+          </div>
+        </div>
+
+        <!-- 5 Dimensional Sector Cards -->
+        <div class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-border-overlay pb-3">
+            <div>
+              <p class="text-xs uppercase font-mono text-dunite-red font-semibold">Capturing Every Dimension</p>
+              <h2 class="font-display text-2xl font-bold text-white">5 Core Achievement Sectors</h2>
+            </div>
+            <span class="text-xs text-on-surface-variant">Select any sector to explore specialized achievements</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- Academic -->
+            <button onclick="switchView('academic')" class="text-left p-5 rounded-xl bg-surface-container-lowest border border-border-overlay hover:border-sector-academic transition-all group hover:-translate-y-1">
+              <div class="w-9 h-9 rounded-lg bg-sector-academic/10 text-sector-academic flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined">school</span>
+              </div>
+              <h3 class="font-bold text-sm text-white group-hover:text-sector-academic transition-colors">Academic</h3>
+              <p class="text-xs text-on-surface-variant mt-1">Scholarships, Research Publications, Awards &amp; Fellowships</p>
+              <span class="text-[11px] font-mono text-sector-academic mt-3 block">&rarr; Explore Sector</span>
+            </button>
+
+            <!-- Professional -->
+            <button onclick="switchView('professional')" class="text-left p-5 rounded-xl bg-surface-container-lowest border border-border-overlay hover:border-sector-professional transition-all group hover:-translate-y-1">
+              <div class="w-9 h-9 rounded-lg bg-sector-professional/10 text-sector-professional flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined">work</span>
+              </div>
+              <h3 class="font-bold text-sm text-white group-hover:text-sector-professional transition-colors">Professional</h3>
+              <p class="text-xs text-on-surface-variant mt-1">Promotions, Leadership Appointments &amp; Certifications</p>
+              <span class="text-[11px] font-mono text-sector-professional mt-3 block">&rarr; Explore Sector</span>
+            </button>
+
+            <!-- Entrepreneurial -->
+            <button onclick="switchView('entrepreneurial')" class="text-left p-5 rounded-xl bg-surface-container-lowest border border-border-overlay hover:border-sector-entrepreneurial transition-all group hover:-translate-y-1">
+              <div class="w-9 h-9 rounded-lg bg-sector-entrepreneurial/10 text-sector-entrepreneurial flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined">rocket_launch</span>
+              </div>
+              <h3 class="font-bold text-sm text-white group-hover:text-sector-entrepreneurial transition-colors">Entrepreneurial</h3>
+              <p class="text-xs text-on-surface-variant mt-1">Startup Launches, Funding Rounds &amp; Accelerators</p>
+              <span class="text-[11px] font-mono text-sector-entrepreneurial mt-3 block">&rarr; Explore Sector</span>
+            </button>
+
+            <!-- Social Impact -->
+            <button onclick="switchView('social-impact')" class="text-left p-5 rounded-xl bg-surface-container-lowest border border-border-overlay hover:border-sector-social transition-all group hover:-translate-y-1">
+              <div class="w-9 h-9 rounded-lg bg-sector-social/10 text-sector-social flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined">volunteer_activism</span>
+              </div>
+              <h3 class="font-bold text-sm text-white group-hover:text-sector-social transition-colors">Social Impact</h3>
+              <p class="text-xs text-on-surface-variant mt-1">Community Projects, NGO Drives &amp; Volunteer Scale</p>
+              <span class="text-[11px] font-mono text-sector-social mt-3 block">&rarr; Explore Sector</span>
+            </button>
+
+            <!-- Personal -->
+            <button onclick="switchView('personal')" class="text-left p-5 rounded-xl bg-surface-container-lowest border border-border-overlay hover:border-sector-personal transition-all group hover:-translate-y-1">
+              <div class="w-9 h-9 rounded-lg bg-sector-personal/10 text-sector-personal flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined">military_tech</span>
+              </div>
+              <h3 class="font-bold text-sm text-white group-hover:text-sector-personal transition-colors">Personal</h3>
+              <p class="text-xs text-on-surface-variant mt-1">Inspiring Journeys, Career Breakthroughs &amp; Stories</p>
+              <span class="text-[11px] font-mono text-sector-personal mt-3 block">&rarr; Explore Sector</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Lifecycle of a Verified Achievement (4 Stages) -->
+        <div class="p-6 md:p-8 rounded-2xl bg-surface-container-lowest border border-border-overlay space-y-6">
+          <div class="text-center max-w-xl mx-auto space-y-2">
+            <span class="text-xs uppercase font-mono text-academic-gold font-semibold">End-to-End Workflow</span>
+            <h2 class="font-display text-2xl font-bold text-white">The Lifecycle of a Verified Achievement</h2>
+            <p class="text-xs text-on-surface-variant">From raw milestone to nationwide media distribution in four structured phases.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4">
+            <div class="p-4 rounded-xl bg-surface-container border border-border-overlay relative space-y-2">
+              <div class="w-8 h-8 rounded-full bg-dunite-red/20 text-dunite-red border border-dunite-red/30 flex items-center justify-center font-bold text-sm font-mono">1</div>
+              <h4 class="font-bold text-sm text-white">Authenticate</h4>
+              <p class="text-xs text-on-surface-variant">Establishing uncompromising identity verification via DUNITE and DU institutional credentials.</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-container border border-border-overlay relative space-y-2">
+              <div class="w-8 h-8 rounded-full bg-academic-gold/20 text-academic-gold border border-academic-gold/30 flex items-center justify-center font-bold text-sm font-mono">2</div>
+              <h4 class="font-bold text-sm text-white">Submit with Proof</h4>
+              <p class="text-xs text-on-surface-variant">Capturing excellence across structured taxonomic categories with primary verifiable evidence.</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-container border border-border-overlay relative space-y-2">
+              <div class="w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 flex items-center justify-center font-bold text-sm font-mono">3</div>
+              <h4 class="font-bold text-sm text-white">Validate</h4>
+              <p class="text-xs text-on-surface-variant">Filtering submissions through automated checks, editorial authenticity review, and publication approval.</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-container border border-border-overlay relative space-y-2">
+              <div class="w-8 h-8 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 flex items-center justify-center font-bold text-sm font-mono">4</div>
+              <h4 class="font-bold text-sm text-white">Amplify</h4>
+              <p class="text-xs text-on-surface-variant">Generating media-ready press kits and concentric routing across 100+ national, digital, and campus partners.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Featured Recent Press Releases -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between border-b border-border-overlay pb-3">
+            <div>
+              <p class="text-xs uppercase font-mono text-dunite-red font-semibold">Latest Dispatches</p>
+              <h2 class="font-display text-2xl font-bold text-white">Featured Press Releases</h2>
+            </div>
+            <button onclick="switchView('stories')" class="text-xs text-academic-gold hover:underline font-mono">View All 24 Stories &rarr;</button>
+          </div>
+
+          <div id="home-featured-grid" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- Dynamically injected via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------------ -->
+      <!-- VIEW 2: 5-STEP STORY & PROOF SUBMISSION STUDIO               -->
+      <!-- ------------------------------------------------------------ -->
+      <section id="view-submit" class="view-panel space-y-8">
+        <!-- Stepper Header -->
+        <div class="bg-surface-container-lowest border border-border-overlay rounded-2xl p-6 flex flex-col items-center">
+          <div class="text-center mb-6">
+            <span class="text-xs uppercase font-mono text-dunite-red font-semibold">Submission Studio</span>
+            <h2 class="font-display text-xl font-bold text-white mt-1">Publish Your Story to the PR Network</h2>
+            <p class="text-xs text-on-surface-variant">Follow the 3-step structured draft flow below to prepare your media kit.</p>
+          </div>
+
+          <div class="flex w-full max-w-3xl justify-between items-start relative z-10">
+            <div id="journey-authenticate" class="journey-step state-complete flex flex-col items-center gap-2 relative flex-1 progress-line">
+              <div class="journey-circle w-10 h-10 rounded-full border-2 border-border-overlay bg-surface-navy flex items-center justify-center text-on-surface-variant text-sm font-mono">
+                <span class="material-symbols-outlined text-sm">check</span>
+              </div>
+              <span class="journey-label text-xs text-on-surface-variant font-medium">1. Auth</span>
+            </div>
+
+            <div id="journey-submit" class="journey-step state-active flex flex-col items-center gap-2 relative flex-1 progress-line">
+              <div class="journey-circle w-10 h-10 rounded-full border-2 border-border-overlay bg-surface-navy flex items-center justify-center text-on-surface-variant text-sm font-mono">
+                <span class="material-symbols-outlined text-sm">edit_document</span>
+              </div>
+              <span class="journey-label text-xs text-on-surface-variant font-medium">2. Draft</span>
+            </div>
+
+            <div id="journey-validate" class="journey-step flex flex-col items-center gap-2 relative flex-1 progress-line">
+              <div class="journey-circle w-10 h-10 rounded-full border-2 border-border-overlay bg-surface-navy flex items-center justify-center text-on-surface-variant text-sm font-mono">
+                <span class="material-symbols-outlined text-sm">policy</span>
+              </div>
+              <span class="journey-label text-xs text-on-surface-variant font-medium">3. Review</span>
+            </div>
+
+            <div id="journey-amplify" class="journey-step flex flex-col items-center gap-2 relative flex-1">
+              <div class="journey-circle w-10 h-10 rounded-full border-2 border-border-overlay bg-surface-navy flex items-center justify-center text-on-surface-variant text-sm font-mono">
+                <span class="material-symbols-outlined text-sm">campaign</span>
+              </div>
+              <span class="journey-label text-xs text-on-surface-variant font-medium">4. Amplify</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submission Form Card -->
+        <div class="bg-surface-container-high border border-border-overlay rounded-2xl p-6 md:p-8 shadow-2xl relative">
+          <!-- Wizard Step Indicators -->
+          <div class="flex justify-between items-center border-b border-border-overlay pb-4 mb-6">
+            <div class="flex items-center gap-3">
+              <div class="form-dot active w-8 h-8 rounded-full border border-border-overlay flex items-center justify-center text-xs font-mono font-bold" data-form-dot="1">1</div>
+              <span class="text-xs uppercase font-mono font-semibold text-white">Story Narrative</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="form-dot w-8 h-8 rounded-full border border-border-overlay flex items-center justify-center text-xs font-mono font-bold" data-form-dot="2">2</div>
+              <span class="text-xs uppercase font-mono text-on-surface-variant">Proof &amp; Metrics</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="form-dot w-8 h-8 rounded-full border border-border-overlay flex items-center justify-center text-xs font-mono font-bold" data-form-dot="3">3</div>
+              <span class="text-xs uppercase font-mono text-on-surface-variant">Live Preview</span>
+            </div>
+          </div>
+
+          <form id="story-form" class="space-y-6" novalidate>
+            <!-- Step 1: Story Details -->
+            <div class="form-step active space-y-4" data-form-step="1">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="category">
+                    Achievement Sector *
+                  </label>
+                  <select id="category" name="category" required class="w-full bg-surface-navy border border-border-overlay rounded-lg py-2.5 px-3 text-sm text-white focus:border-academic-gold">
+                    <option value="">Select a sector</option>
+                    <option value="Academic">Academic &amp; Research</option>
+                    <option value="Professional">Professional &amp; Corporate</option>
+                    <option value="Entrepreneurial">Entrepreneurship &amp; Startups</option>
+                    <option value="Social Impact">Social Impact &amp; Community</option>
+                    <option value="Personal">Personal Milestones</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="sub-type">
+                    Category Classification *
+                  </label>
+                  <input id="sub-type" name="subType" required type="text" placeholder="e.g. Research Publication, Seed Funding, Fellowship" class="w-full bg-surface-navy border border-border-overlay rounded-lg py-2.5 px-3 text-sm text-white focus:border-academic-gold" />
+                </div>
+              </div>
+
+              <div>
+                <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="headline">
+                  Media Headline * <span class="text-[10px] text-on-surface-variant font-mono">(Keep concise &amp; impactful)</span>
+                </label>
+                <input id="headline" name="headline" required minlength="10" maxlength="120" type="text" placeholder="e.g., DU Robotics Team Secures 1st Place at National Autonomous AI Challenge" class="w-full bg-surface-navy border border-border-overlay rounded-lg py-2.5 px-3 text-sm text-white focus:border-academic-gold" />
+                <div class="flex justify-between mt-1 text-[11px] text-on-surface-variant">
+                  <span id="headline-error" class="text-error"></span>
+                  <span id="headline-count" class="font-mono">0/120</span>
+                </div>
+              </div>
+
+              <div>
+                <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="summary">
+                  Executive Summary * <span class="text-[10px] text-on-surface-variant font-mono">(2-3 sentences for journalists)</span>
+                </label>
+                <textarea id="summary" name="summary" required minlength="40" maxlength="600" rows="4" placeholder="Summarize the core accomplishment, who achieved it, and why it matters to Dhaka University and the nation..." class="w-full bg-surface-navy border border-border-overlay rounded-lg py-2.5 px-3 text-sm text-white focus:border-academic-gold resize-none"></textarea>
+                <div class="flex justify-between mt-1 text-[11px] text-on-surface-variant">
+                  <span id="summary-error" class="text-error"></span>
+                  <span id="summary-count" class="font-mono">0/600</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: Proof & Metrics -->
+            <div class="form-step space-y-4" data-form-step="2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="achievement-date">Date of Achievement *</label>
+                  <input id="achievement-date" name="achievementDate" required type="date" class="w-full bg-surface-navy border border-border-overlay rounded-lg py-2.5 px-3 text-sm text-white focus:border-academic-gold" />
+                </div>
+
+                <div>
+                  <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="institution">Department / Faculty / Hall / Venture *</label>
+                  <input id="institution" name="institution" required type="text" placeholder="e.g. Department of CSE, Faculty of Science" class="w-full bg-surface-navy border border-border-overlay rounded-lg py-2.5 px-3 text-sm text-white focus:border-academic-gold" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="impact">Primary Metric / Quantifiable Result</label>
+                  <input id="impact" name="impact" type="text" placeholder="e.g., $50,000 Raised, 3.98 CGPA, 1,200 Citations" class="w-full bg-surface-navy border border-border-overlay rounded-lg py-2.5 px-3 text-sm text-white focus:border-academic-gold" />
+                </div>
+
+                <div>
+                  <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="evidence-link">Official Evidence URL / DOI / Announcement</label>
+                  <input id="evidence-link" name="evidenceLink" type="url" placeholder="https://journal.org/paper-doi or https://news.com" class="w-full bg-surface-navy border border-border-overlay rounded-lg py-2.5 px-3 text-sm text-white focus:border-academic-gold" />
+                </div>
+              </div>
+
+              <div>
+                <label for="evidence-files" class="cursor-pointer border-2 border-dashed border-border-overlay hover:border-academic-gold/60 rounded-xl bg-surface-navy p-6 flex flex-col items-center text-center transition-colors">
+                  <span class="material-symbols-outlined text-academic-gold text-3xl mb-1">cloud_upload</span>
+                  <span class="text-sm font-semibold text-white">Upload Certificate, Paper PDF, or Photo Proof</span>
+                  <span class="text-xs text-on-surface-variant mt-1">PDF, JPG, PNG accepted (up to 10 MB)</span>
+                </label>
+                <input id="evidence-files" type="file" multiple accept=".pdf,image/png,image/jpeg" class="sr-only" />
+                <div id="file-list" class="text-xs text-academic-gold mt-2 space-y-1"></div>
+              </div>
+
+              <!-- Live DU Student Email Check -->
+              <div class="p-4 rounded-xl bg-surface-navy border border-border-overlay space-y-2">
+                <label class="text-xs text-on-surface-variant block font-medium" for="author-email">
+                  Submitter Institutional Email (@du.ac.bd) *
+                </label>
+                <div class="relative">
+                  <input id="author-email" name="authorEmail" required type="email" placeholder="student_name@du.ac.bd" class="w-full bg-surface-container-lowest border border-border-overlay rounded-lg py-2.5 px-3 text-sm text-white focus:border-academic-gold" />
+                  <span id="du-badge" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold px-2 py-0.5 rounded bg-green-500/20 text-green-400 border border-green-500/40">
+                    &check; DU Verified
+                  </span>
+                </div>
+                <p class="text-[11px] text-on-surface-variant">Emails ending in <code>@du.ac.bd</code> qualify for instant automated verification.</p>
+              </div>
+            </div>
+
+            <!-- Step 3: Deconstructed Review -->
+            <div class="form-step space-y-4" data-form-step="3">
+              <div class="bg-surface-navy border border-border-overlay rounded-xl p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-border-overlay pb-3">
+                  <span class="text-xs uppercase font-mono text-dunite-red font-semibold">Press Release Preview</span>
+                  <span id="review-category-badge" class="px-2.5 py-0.5 rounded text-xs font-bold font-mono bg-academic-gold/10 text-academic-gold border border-academic-gold/30">ACADEMIC</span>
+                </div>
+
+                <div>
+                  <h3 id="review-headline" class="text-lg font-bold text-white">Headline</h3>
+                  <p id="review-meta" class="text-xs text-on-surface-variant font-mono mt-1"></p>
+                </div>
+
+                <div class="p-4 rounded-lg bg-surface-container-lowest border border-border-overlay">
+                  <span class="text-[11px] uppercase font-mono text-academic-gold block mb-1">Executive Summary</span>
+                  <p id="review-summary" class="text-xs text-on-surface-variant leading-relaxed"></p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <span class="text-on-surface-variant font-mono block">Primary Metric</span>
+                    <span id="review-impact" class="font-bold text-white">—</span>
+                  </div>
+                  <div>
+                    <span class="text-on-surface-variant font-mono block">Attached Evidence</span>
+                    <span id="review-evidence" class="font-bold text-white">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <label class="flex gap-2 items-start text-xs text-on-surface-variant cursor-pointer">
+                <input id="confirm-box" type="checkbox" required class="mt-0.5 rounded border-border-overlay bg-surface-navy text-dunite-red" />
+                <span>I certify that this achievement is authentic and authorize the DAIN Editorial Committee to syndicate this release to 100+ news and digital media partners.</span>
+              </label>
+            </div>
+
+            <!-- Wizard Navigation Buttons -->
+            <div class="flex items-center justify-between pt-4 border-t border-border-overlay">
+              <button id="btn-wizard-back" type="button" class="hidden px-4 py-2 rounded-lg border border-border-overlay text-xs text-on-surface hover:bg-surface-container-highest transition-colors">
+                &larr; Back
+              </button>
+              <button id="btn-save-draft" type="button" class="px-4 py-2 rounded-lg border border-border-overlay text-xs text-on-surface-variant hover:text-white hover:bg-surface-container-highest transition-colors">
+                Save Local Draft
+              </button>
+              <button id="btn-wizard-next" type="button" class="ml-auto px-6 py-2.5 bg-dunite-red hover:bg-red-700 text-white rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-lg shadow-dunite-red/20">
+                <span id="wizard-next-label">Continue to Proof</span>
+                <span class="material-symbols-outlined text-base">arrow_forward</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- 3-Stage Approval Live Simulator Section -->
+        <div id="validation-section" class="bg-surface-container-lowest border border-border-overlay rounded-2xl p-6 md:p-8 space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <p class="text-xs uppercase font-mono text-dunite-red font-semibold">Verification Engine</p>
+              <h3 class="font-display text-xl font-bold text-white">3-Stage Editorial Review Pipeline</h3>
+              <p class="text-xs text-on-surface-variant mt-0.5">Automated screening &bull; Editorial fact verification &bull; Concentric media routing.</p>
+            </div>
+
+            <button
+              id="run-simulation-btn"
+              type="button"
+              class="px-4 py-2 border border-academic-gold/40 text-academic-gold hover:bg-academic-gold/10 rounded-lg text-xs font-mono font-semibold flex items-center gap-2 transition-colors self-start"
+            >
+              <span class="material-symbols-outlined text-base">play_arrow</span>
+              Run Interactive Demo
+            </button>
+          </div>
+
+          <div class="validation-track">
+            <!-- Stage 1 -->
+            <div id="validation-stage-0" class="validation-stage rounded-xl p-4 flex flex-col justify-between">
+              <div>
+                <div class="stage-node rounded-full flex items-center justify-center mb-2">
+                  <span class="material-symbols-outlined text-lg">fact_check</span>
+                </div>
+                <span class="text-[10px] font-mono text-dunite-red uppercase font-bold">STAGE 01</span>
+                <h4 class="font-bold text-sm text-white">Automated Validation</h4>
+                <p class="text-xs text-on-surface-variant mt-1">Completeness check, DU domain verification, duplicate detection.</p>
+              </div>
+              <div class="flex justify-between items-center border-t border-border-overlay pt-2 mt-2 text-xs">
+                <span class="stage-status text-on-surface-variant font-mono text-[11px]">Waiting</span>
+                <span class="stage-result material-symbols-outlined text-on-surface-variant text-base">schedule</span>
+              </div>
+            </div>
+
+            <div id="validation-connector-0" class="validation-connector"></div>
+
+            <!-- Stage 2 -->
+            <div id="validation-stage-1" class="validation-stage rounded-xl p-4 flex flex-col justify-between">
+              <div>
+                <div class="stage-node rounded-full flex items-center justify-center mb-2">
+                  <span class="material-symbols-outlined text-lg">rate_review</span>
+                </div>
+                <span class="text-[10px] font-mono text-dunite-red uppercase font-bold">STAGE 02</span>
+                <h4 class="font-bold text-sm text-white">Editorial Review</h4>
+                <p class="text-xs text-on-surface-variant mt-1">Fact verification, newsworthiness check, media kit polish.</p>
+              </div>
+              <div class="flex justify-between items-center border-t border-border-overlay pt-2 mt-2 text-xs">
+                <span class="stage-status text-on-surface-variant font-mono text-[11px]">Waiting</span>
+                <span class="stage-result material-symbols-outlined text-on-surface-variant text-base">schedule</span>
+              </div>
+            </div>
+
+            <div id="validation-connector-1" class="validation-connector"></div>
+
+            <!-- Stage 3 -->
+            <div id="validation-stage-2" class="validation-stage rounded-xl p-4 flex flex-col justify-between">
+              <div>
+                <div class="stage-node rounded-full flex items-center justify-center mb-2">
+                  <span class="material-symbols-outlined text-lg">campaign</span>
+                </div>
+                <span class="text-[10px] font-mono text-dunite-red uppercase font-bold">STAGE 03</span>
+                <h4 class="font-bold text-sm text-white">Media Routing</h4>
+                <p class="text-xs text-on-surface-variant mt-1">Concentric dispatch across 100+ National &amp; Campus media.</p>
+              </div>
+              <div class="flex justify-between items-center border-t border-border-overlay pt-2 mt-2 text-xs">
+                <span class="stage-status text-on-surface-variant font-mono text-[11px]">Waiting</span>
+                <span class="stage-result material-symbols-outlined text-on-surface-variant text-base">schedule</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="pipeline-log" class="bg-surface-navy border border-border-overlay rounded-lg p-3 font-mono text-xs text-on-surface-variant">
+            SYSTEM // Pipeline standing by for story submission...
+          </div>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------------ -->
+      <!-- VIEW 3: VERIFIED STORIES & PRESS RELEASES HUB                -->
+      <!-- ------------------------------------------------------------ -->
+      <section id="view-stories" class="view-panel space-y-6">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border-overlay pb-4">
+          <div>
+            <span class="text-xs uppercase font-mono text-dunite-red font-semibold">Institutional Archive</span>
+            <h2 class="font-display text-2xl font-bold text-white">Verified DU Success Stories</h2>
+            <p class="text-xs text-on-surface-variant">Browse approved press releases syndicated across national news networks.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="switchView('submit')" class="bg-dunite-red hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-1">
+              <span class="material-symbols-outlined text-sm">add</span>
+              <span>New Story</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Pill Bar -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button class="filter-pill active px-3 py-1.5 rounded-lg text-xs font-mono font-medium border border-academic-gold bg-academic-gold/10 text-academic-gold" data-sector="All">All Sectors</button>
+          <button class="filter-pill px-3 py-1.5 rounded-lg text-xs font-mono font-medium border border-border-overlay bg-surface-container text-on-surface-variant hover:text-white" data-sector="Academic">Academic</button>
+          <button class="filter-pill px-3 py-1.5 rounded-lg text-xs font-mono font-medium border border-border-overlay bg-surface-container text-on-surface-variant hover:text-white" data-sector="Professional">Professional</button>
+          <button class="filter-pill px-3 py-1.5 rounded-lg text-xs font-mono font-medium border border-border-overlay bg-surface-container text-on-surface-variant hover:text-white" data-sector="Entrepreneurial">Entrepreneurial</button>
+          <button class="filter-pill px-3 py-1.5 rounded-lg text-xs font-mono font-medium border border-border-overlay bg-surface-container text-on-surface-variant hover:text-white" data-sector="Social Impact">Social Impact</button>
+          <button class="filter-pill px-3 py-1.5 rounded-lg text-xs font-mono font-medium border border-border-overlay bg-surface-container text-on-surface-variant hover:text-white" data-sector="Personal">Personal</button>
+        </div>
+
+        <!-- Stories Grid -->
+        <div id="stories-directory-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Injected via JS -->
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------------ -->
+      <!-- VIEW 4: 5 DEDICATED SECTOR PORTALS                           -->
+      <!-- ------------------------------------------------------------ -->
+      <section id="view-academic" class="view-panel space-y-6">
+        <div class="p-6 rounded-2xl bg-gradient-to-r from-sector-academic/10 via-surface-container-lowest to-surface-navy border border-sector-academic/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span class="text-xs font-mono uppercase text-sector-academic font-bold">Sector Portfolio // 01</span>
+            <h2 class="font-display text-3xl font-bold text-white mt-1">Academic &amp; Research Excellence</h2>
+            <p class="text-xs text-on-surface-variant max-w-xl mt-1">Recognizing breakthrough journal publications, conference awards, international scholarships, and CGPA milestones from DU students and faculty.</p>
+          </div>
+          <button onclick="openSubmitWithSector('Academic')" class="bg-sector-academic hover:bg-sky-500 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase tracking-wider flex items-center gap-1 self-start">
+            <span class="material-symbols-outlined text-sm">school</span>
+            <span>Submit Academic Story</span>
+          </button>
+        </div>
+        <div id="academic-stories-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </section>
+
+      <section id="view-professional" class="view-panel space-y-6">
+        <div class="p-6 rounded-2xl bg-gradient-to-r from-sector-professional/10 via-surface-container-lowest to-surface-navy border border-sector-professional/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span class="text-xs font-mono uppercase text-sector-professional font-bold">Sector Portfolio // 02</span>
+            <h2 class="font-display text-3xl font-bold text-white mt-1">Professional Placements &amp; Careers</h2>
+            <p class="text-xs text-on-surface-variant max-w-xl mt-1">Highlighting corporate promotions, leadership appointments at Fortune 500s/MNCs, industry certifications, and public servant distinctions.</p>
+          </div>
+          <button onclick="openSubmitWithSector('Professional')" class="bg-sector-professional hover:bg-emerald-500 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase tracking-wider flex items-center gap-1 self-start">
+            <span class="material-symbols-outlined text-sm">work</span>
+            <span>Submit Career Story</span>
+          </button>
+        </div>
+        <div id="professional-stories-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </section>
+
+      <section id="view-entrepreneurial" class="view-panel space-y-6">
+        <div class="p-6 rounded-2xl bg-gradient-to-r from-sector-entrepreneurial/10 via-surface-container-lowest to-surface-navy border border-sector-entrepreneurial/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span class="text-xs font-mono uppercase text-sector-entrepreneurial font-bold">Sector Portfolio // 03</span>
+            <h2 class="font-display text-3xl font-bold text-white mt-1">Entrepreneurship &amp; Venture Scale</h2>
+            <p class="text-xs text-on-surface-variant max-w-xl mt-1">Amplifying Dhaka University startup launches, venture capital funding rounds, global accelerator selections, and disruptive product releases.</p>
+          </div>
+          <button onclick="openSubmitWithSector('Entrepreneurial')" class="bg-sector-entrepreneurial hover:bg-amber-500 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase tracking-wider flex items-center gap-1 self-start">
+            <span class="material-symbols-outlined text-sm">rocket_launch</span>
+            <span>Submit Startup Story</span>
+          </button>
+        </div>
+        <div id="entrepreneurial-stories-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </section>
+
+      <section id="view-social-impact" class="view-panel space-y-6">
+        <div class="p-6 rounded-2xl bg-gradient-to-r from-sector-social/10 via-surface-container-lowest to-surface-navy border border-sector-social/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span class="text-xs font-mono uppercase text-sector-social font-bold">Sector Portfolio // 04</span>
+            <h2 class="font-display text-3xl font-bold text-white mt-1">Social Impact &amp; Community Drives</h2>
+            <p class="text-xs text-on-surface-variant max-w-xl mt-1">Celebrating community development campaigns, NGO initiatives, public policy contributions, volunteer achievements, and grassroots changemakers.</p>
+          </div>
+          <button onclick="openSubmitWithSector('Social Impact')" class="bg-sector-social hover:bg-purple-500 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase tracking-wider flex items-center gap-1 self-start">
+            <span class="material-symbols-outlined text-sm">volunteer_activism</span>
+            <span>Submit Impact Story</span>
+          </button>
+        </div>
+        <div id="social-stories-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </section>
+
+      <section id="view-personal" class="view-panel space-y-6">
+        <div class="p-6 rounded-2xl bg-gradient-to-r from-sector-personal/10 via-surface-container-lowest to-surface-navy border border-sector-personal/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span class="text-xs font-mono uppercase text-sector-personal font-bold">Sector Portfolio // 05</span>
+            <h2 class="font-display text-3xl font-bold text-white mt-1">Personal Success &amp; Inspiring Journeys</h2>
+            <p class="text-xs text-on-surface-variant max-w-xl mt-1">Chronicling extraordinary personal triumphs, artistic &amp; athletic honors, overcoming adversity, and human interest stories across the DU family.</p>
+          </div>
+          <button onclick="openSubmitWithSector('Personal')" class="bg-sector-personal hover:bg-pink-500 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase tracking-wider flex items-center gap-1 self-start">
+            <span class="material-symbols-outlined text-sm">military_tech</span>
+            <span>Submit Personal Story</span>
+          </button>
+        </div>
+        <div id="personal-stories-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </section>
+
+      <!-- ------------------------------------------------------------ -->
+      <!-- VIEW 5: 100+ MEDIA DISTRIBUTION NETWORK DIRECTORY            -->
+      <!-- ------------------------------------------------------------ -->
+      <section id="view-distribution" class="view-panel space-y-6">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border-overlay pb-4">
+          <div>
+            <span class="text-xs uppercase font-mono text-academic-gold font-semibold">Syndication Architecture</span>
+            <h2 class="font-display text-2xl font-bold text-white">100+ Media Distribution Network</h2>
+            <p class="text-xs text-on-surface-variant">Concentric routing dispatches verified DU achievements to targeted editorial newsrooms.</p>
+          </div>
+
+          <button onclick="showToast('Journalist accreditation portal opened.', 'verified')" class="px-4 py-2 border border-academic-gold text-academic-gold hover:bg-academic-gold/10 rounded-lg text-xs font-mono font-medium">
+            + Partner as Media Organization
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Tier 1: National Media -->
+          <div class="p-5 rounded-xl bg-surface-container-lowest border border-border-overlay space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-dunite-red uppercase">Tier 01</span>
+              <span class="material-symbols-outlined text-dunite-red">tv</span>
+            </div>
+            <h3 class="font-bold text-base text-white">National Media &amp; TV</h3>
+            <p class="text-xs text-on-surface-variant">High-impact breakthroughs, major research, startup funding &gt; $50K.</p>
+            <ul class="text-xs space-y-1.5 text-on-surface-variant pt-2 border-t border-border-overlay font-mono">
+              <li>&bull; National Dailies (Prothom Alo, Daily Star)</li>
+              <li>&bull; Television Networks (Somoy TV, Channel i)</li>
+              <li>&bull; National News Agencies (BSS, UNB)</li>
+            </ul>
+          </div>
+
+          <!-- Tier 2: Digital Partners -->
+          <div class="p-5 rounded-xl bg-surface-container-lowest border border-border-overlay space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-academic-gold uppercase">Tier 02</span>
+              <span class="material-symbols-outlined text-academic-gold">language</span>
+            </div>
+            <h3 class="font-bold text-base text-white">Digital News &amp; Tech</h3>
+            <p class="text-xs text-on-surface-variant">Online publications, technology portals, youth platforms, and startups.</p>
+            <ul class="text-xs space-y-1.5 text-on-surface-variant pt-2 border-t border-border-overlay font-mono">
+              <li>&bull; Tech in Asia, Future Startup</li>
+              <li>&bull; Dhaka Tribune Online, BDNews24</li>
+              <li>&bull; Youth &amp; Career Portals</li>
+            </ul>
+          </div>
+
+          <!-- Tier 3: University Channels -->
+          <div class="p-5 rounded-xl bg-surface-container-lowest border border-border-overlay space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-primary uppercase">Tier 03</span>
+              <span class="material-symbols-outlined text-primary">school</span>
+            </div>
+            <h3 class="font-bold text-base text-white">University &amp; Alumni</h3>
+            <p class="text-xs text-on-surface-variant">Direct dissemination across DU community channels &amp; alumni networks.</p>
+            <ul class="text-xs space-y-1.5 text-on-surface-variant pt-2 border-t border-border-overlay font-mono">
+              <li>&bull; DUNITE Official Channels</li>
+              <li>&bull; DU Journalists' Association (DUJA)</li>
+              <li>&bull; Alumni Chapter Bulletins</li>
+            </ul>
+          </div>
+
+          <!-- Tier 4: Byte Size Syndication -->
+          <div class="p-5 rounded-xl bg-surface-container-lowest border border-border-overlay space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-sector-social uppercase">Tier 04</span>
+              <span class="material-symbols-outlined text-sector-social">cell_tower</span>
+            </div>
+            <h3 class="font-bold text-base text-white">Byte-Sized Syndication</h3>
+            <p class="text-xs text-on-surface-variant">Optimized micro-content for social media feeds, digests, and newsletters.</p>
+            <ul class="text-xs space-y-1.5 text-on-surface-variant pt-2 border-t border-border-overlay font-mono">
+              <li>&bull; LinkedIn Executive Spotlights</li>
+              <li>&bull; Newsletter Highlights &amp; Digest</li>
+              <li>&bull; Short-form Video &amp; Graphics</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------------ -->
+      <!-- VIEW 6: 3-STAGE EDITORIAL REVIEW & ADMIN DASHBOARD           -->
+      <!-- ------------------------------------------------------------ -->
+      <section id="view-admin" class="view-panel space-y-6">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border-overlay pb-4">
+          <div>
+            <span class="text-xs uppercase font-mono text-dunite-red font-semibold">Editorial Workstation</span>
+            <h2 class="font-display text-2xl font-bold text-white">3-Stage Editorial Review Pipeline</h2>
+            <p class="text-xs text-on-surface-variant">Review incoming student/alumni submissions, trigger automated fact verification, and approve media routing.</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-mono text-academic-gold px-2.5 py-1 rounded bg-surface-container border border-border-overlay">
+              Admin: DAIN Editorial Board
+            </span>
+          </div>
+        </div>
+
+        <!-- Admin Table of Submissions -->
+        <div class="bg-surface-container-lowest border border-border-overlay rounded-2xl overflow-hidden shadow-xl">
+          <div class="p-4 border-b border-border-overlay flex flex-wrap items-center justify-between gap-3 bg-surface-container/60">
+            <h3 class="font-bold text-sm text-white">Active Submission Registry</h3>
+            <div class="flex items-center gap-2 text-xs font-mono">
+              <span class="text-on-surface-variant">Filter Status:</span>
+              <select id="admin-status-filter" onchange="renderAdminSubmissions()" class="bg-surface-navy border border-border-overlay rounded py-1 px-2 text-xs text-white">
+                <option value="All">All Statuses</option>
+                <option value="In Review">In Review</option>
+                <option value="Approved">Approved</option>
+                <option value="Draft">Draft</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs min-w-[720px]">
+              <thead class="bg-surface-container-high text-on-surface-variant font-mono uppercase tracking-wider">
+                <tr>
+                  <th class="p-3">ID &amp; Title</th>
+                  <th class="p-3">Sector</th>
+                  <th class="p-3">Submitted By</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3 text-right">Editorial Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-submissions-table" class="divide-y divide-border-overlay">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------------ -->
+      <!-- VIEW 7: DUNITE AUTHENTICATION & VERIFICATION                 -->
+      <!-- ------------------------------------------------------------ -->
+      <section id="view-auth" class="view-panel space-y-6">
+        <div class="max-w-md mx-auto bg-surface-container-high border border-border-overlay rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
+          <div class="text-center space-y-2">
+            <img src="assets/dunite-logo.png" class="w-12 h-12 rounded-xl mx-auto border border-border-overlay" alt="DUNITE Logo" />
+            <h2 class="font-display text-xl font-bold text-white">DUNITE Identity Verification</h2>
+            <p class="text-xs text-on-surface-variant">Authenticate with Dhaka University credentials to publish verified milestones.</p>
+          </div>
+
+          <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+            <div>
+              <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="auth-name">Full Name</label>
+              <input id="auth-name" type="text" required placeholder="e.g. Asif Mahmud" class="w-full bg-surface-navy border border-border-overlay rounded-lg py-2.5 px-3 text-sm text-white focus:border-academic-gold" />
+            </div>
+
+            <div>
+              <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="auth-email-input">
+                DU Email Address (@du.ac.bd)
+              </label>
+              <input
+                id="auth-email-input"
+                type="email"
+                required
+                oninput="checkAuthEmail(this.value)"
+                placeholder="student_id@du.ac.bd"
+                class="w-full bg-surface-navy border border-border-overlay rounded-lg py-2.5 px-3 text-sm text-white focus:border-academic-gold"
+              />
+              <div id="auth-du-tag" class="hidden mt-2 p-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-mono flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-sm">verified</span>
+                <span>Automatic DU Student Verification Approved</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="auth-role">Affiliation Role</label>
+              <select id="auth-role" class="w-full bg-surface-navy border border-border-overlay rounded-lg py-2.5 px-3 text-sm text-white focus:border-academic-gold">
+                <option value="Current Student">Current Student</option>
+                <option value="DU Alumni">DU Alumni (Graduate)</option>
+                <option value="Faculty / Teacher">Faculty / Teacher</option>
+                <option value="Researcher">Researcher</option>
+              </select>
+            </div>
+
+            <button type="submit" class="w-full bg-dunite-red hover:bg-red-700 text-white font-semibold py-2.5 rounded-lg text-xs uppercase tracking-wider transition-colors shadow-lg shadow-dunite-red/20">
+              Verify &amp; Enter Platform
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------------ -->
+      <!-- VIEW 8: ABOUT, STRATEGIC RATIONALE & GOVERNANCE              -->
+      <!-- ------------------------------------------------------------ -->
+      <section id="view-about" class="view-panel space-y-8">
+        <div class="p-6 md:p-8 rounded-2xl bg-surface-container-lowest border border-border-overlay space-y-4">
+          <span class="text-xs uppercase font-mono text-academic-gold font-semibold">Institutional Blueprint</span>
+          <h2 class="font-display text-3xl font-bold text-white">About the DUNITE Achievement &amp; Impact Network</h2>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            DAIN is a centralized digital infrastructure designed to systematically identify, document, verify, and amplify the achievements, innovations, milestones, and impact stories originating from the Dhaka University community.
+          </p>
+        </div>
+
+        <!-- What DAIN is / is not matrix -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="p-6 rounded-xl bg-surface-container border border-green-500/20 space-y-3">
+            <h3 class="font-bold text-base text-green-400 flex items-center gap-2">
+              <span class="material-symbols-outlined">check_circle</span>
+              What DAIN Is
+            </h3>
+            <ul class="text-xs text-on-surface-variant space-y-2 leading-relaxed">
+              <li>&bull; <strong class="text-white">PR &amp; Media Distribution Engine:</strong> Transforms raw achievements into journalist-ready press releases.</li>
+              <li>&bull; <strong class="text-white">Institutional Archive:</strong> A permanent digital record of DU's intellectual and societal contributions.</li>
+              <li>&bull; <strong class="text-white">AI-Assisted Verification:</strong> Rigorous 3-stage validation ensuring only authentic, factual stories are syndicated.</li>
+            </ul>
+          </div>
+
+          <div class="p-6 rounded-xl bg-surface-container border border-dunite-red/30 space-y-3">
+            <h3 class="font-bold text-base text-dunite-red flex items-center gap-2">
+              <span class="material-symbols-outlined">cancel</span>
+              What DAIN Is Not
+            </h3>
+            <ul class="text-xs text-on-surface-variant space-y-2 leading-relaxed">
+              <li>&bull; <strong class="text-white">Not a Standalone News Portal:</strong> DAIN syndicates stories to existing national media networks.</li>
+              <li>&bull; <strong class="text-white">Not a Paid PR Agency:</strong> We do not sell guaranteed coverage for promotional unverified content.</li>
+              <li>&bull; <strong class="text-white">Not a Self-Publishing Board:</strong> Stories must pass automated checks and editorial oversight before dispatch.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Governance Committees -->
+        <div class="p-6 rounded-2xl bg-surface-container-lowest border border-border-overlay space-y-4">
+          <h3 class="font-display text-xl font-bold text-white">Governance Structure</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+            <div class="p-4 rounded-xl bg-surface-navy border border-border-overlay space-y-1">
+              <span class="text-xs font-mono text-dunite-red font-bold">01. Editorial</span>
+              <h4 class="font-bold text-sm text-white">Content Review Board</h4>
+              <p class="text-xs text-on-surface-variant">Oversees fact verification, ethical journalism standards, and media narrative quality.</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-navy border border-border-overlay space-y-1">
+              <span class="text-xs font-mono text-academic-gold font-bold">02. Technology</span>
+              <h4 class="font-bold text-sm text-white">Platform &amp; Auth</h4>
+              <p class="text-xs text-on-surface-variant">Manages DUNITE identity authentication, data security, and distribution pipeline uptime.</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-navy border border-border-overlay space-y-1">
+              <span class="text-xs font-mono text-primary font-bold">03. Media Relations</span>
+              <h4 class="font-bold text-sm text-white">Syndication Strategy</h4>
+              <p class="text-xs text-on-surface-variant">Builds partnerships with 100+ national television, print, and digital newsrooms.</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-navy border border-border-overlay space-y-1">
+              <span class="text-xs font-mono text-green-400 font-bold">04. Ethics</span>
+              <h4 class="font-bold text-sm text-white">Compliance &amp; Privacy</h4>
+              <p class="text-xs text-on-surface-variant">Protects user privacy, copyright compliance, and adherence to DU institutional values.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------------ -->
+      <!-- VIEW 9: ANALYTICS, SETTINGS & SUPPORT                        -->
+      <!-- ------------------------------------------------------------ -->
+      <section id="view-analytics" class="view-panel space-y-6">
+        <div class="flex items-center justify-between border-b border-border-overlay pb-4">
+          <div>
+            <span class="text-xs uppercase font-mono text-academic-gold font-semibold">Distribution Intelligence</span>
+            <h2 class="font-display text-2xl font-bold text-white">Media Reach &amp; Syndication Analytics</h2>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="p-5 rounded-xl bg-surface-container-lowest border border-border-overlay">
+            <span class="text-xs text-on-surface-variant font-mono">Total Media Reach</span>
+            <div class="text-3xl font-display font-bold text-academic-gold mt-2">148,200</div>
+            <p class="text-xs text-green-400 mt-1">&uarr; 22.4% vs last month</p>
+          </div>
+          <div class="p-5 rounded-xl bg-surface-container-lowest border border-border-overlay">
+            <span class="text-xs text-on-surface-variant font-mono">Media Placements</span>
+            <div class="text-3xl font-display font-bold text-white mt-2">84</div>
+            <p class="text-xs text-green-400 mt-1">&uarr; 14 published this week</p>
+          </div>
+          <div class="p-5 rounded-xl bg-surface-container-lowest border border-border-overlay">
+            <span class="text-xs text-on-surface-variant font-mono">Editorial Approval Rate</span>
+            <div class="text-3xl font-display font-bold text-dunite-red mt-2">82.6%</div>
+            <p class="text-xs text-on-surface-variant mt-1">Across all 5 sectors</p>
+          </div>
+          <div class="p-5 rounded-xl bg-surface-container-lowest border border-border-overlay">
+            <span class="text-xs text-on-surface-variant font-mono">Avg. Review Time</span>
+            <div class="text-3xl font-display font-bold text-primary mt-2">1.8 hrs</div>
+            <p class="text-xs text-green-400 mt-1">AI-assisted screening active</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-settings" class="view-panel space-y-6">
+        <div class="border-b border-border-overlay pb-4">
+          <span class="text-xs uppercase font-mono text-dunite-red font-semibold">Workspace Controls</span>
+          <h2 class="font-display text-2xl font-bold text-white">Platform Settings &amp; Preferences</h2>
+        </div>
+        <div class="p-6 rounded-xl bg-surface-container-lowest border border-border-overlay max-w-xl space-y-4">
+          <div>
+            <label class="text-xs text-on-surface-variant block mb-1 font-medium">Contributor Display Name</label>
+            <input id="settings-name" value="DU Contributor" class="w-full bg-surface-navy border border-border-overlay rounded-lg p-2.5 text-sm text-white" />
+          </div>
+          <div>
+            <label class="text-xs text-on-surface-variant block mb-1 font-medium">Default Submission Sector</label>
+            <select id="settings-sector" class="w-full bg-surface-navy border border-border-overlay rounded-lg p-2.5 text-sm text-white">
+              <option>Academic</option>
+              <option>Professional</option>
+              <option>Entrepreneurial</option>
+              <option>Social Impact</option>
+              <option>Personal</option>
+            </select>
+          </div>
+          <button onclick="saveSettings()" class="bg-dunite-red hover:bg-red-700 text-white px-5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider">Save Preferences</button>
+        </div>
+      </section>
+
+      <section id="view-support" class="view-panel space-y-6">
+        <div class="border-b border-border-overlay pb-4">
+          <span class="text-xs uppercase font-mono text-academic-gold font-semibold">Help &amp; FAQ</span>
+          <h2 class="font-display text-2xl font-bold text-white">Support &amp; Editorial Inquiries</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-3">
+            <h3 class="font-bold text-base text-white">Frequently Asked Questions</h3>
+            <div class="p-4 rounded-xl bg-surface-container-lowest border border-border-overlay space-y-1">
+              <h4 class="font-bold text-sm text-academic-gold">What evidence is required for story submission?</h4>
+              <p class="text-xs text-on-surface-variant">We accept published journal links, competition certificates, official organization press releases, or institutional announcements.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-surface-container-lowest border border-border-overlay space-y-1">
+              <h4 class="font-bold text-sm text-academic-gold">How does the 100+ media syndication work?</h4>
+              <p class="text-xs text-on-surface-variant">Once approved by the DAIN Editorial Committee, our automated packager formats the story into a media release and dispatches it directly to national news editors.</p>
+            </div>
+          </div>
+
+          <form onsubmit="handleSupportSubmit(event)" class="p-6 rounded-xl bg-surface-container-lowest border border-border-overlay space-y-3">
+            <h3 class="font-bold text-base text-white">Contact the Editorial Board</h3>
+            <input type="text" required placeholder="Subject / Query topic" class="w-full bg-surface-navy border border-border-overlay rounded-lg p-2.5 text-xs text-white" />
+            <textarea rows="4" required placeholder="Describe your question or editorial suggestion..." class="w-full bg-surface-navy border border-border-overlay rounded-lg p-2.5 text-xs text-white resize-none"></textarea>
+            <button type="submit" class="w-full bg-dunite-red hover:bg-red-700 text-white font-semibold py-2.5 rounded-lg text-xs uppercase tracking-wider">Send Editorial Message</button>
+          </form>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- MODAL DIALOG: EXPLODED MEDIA-READY PRESS KIT DECONSTRUCTION   -->
+  <!-- ============================================================== -->
+  <dialog id="story-dialog" class="w-[min(94vw,760px)] bg-surface-container-high border border-border-overlay rounded-2xl text-on-surface p-0 shadow-2xl backdrop:bg-black/80">
+    <div class="p-5 border-b border-border-overlay flex justify-between items-center bg-surface-container-lowest/80">
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-dunite-red text-white font-bold">MEDIA PRESS KIT</span>
+        <span id="dialog-story-id" class="text-xs font-mono text-on-surface-variant">DAIN-2026</span>
+      </div>
+      <button onclick="document.getElementById('story-dialog').close()" class="p-1 text-on-surface-variant hover:text-white">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div id="dialog-body" class="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+      <!-- Injected via JS -->
+    </div>
+  </dialog>
+
+  <!-- ============================================================== -->
+  <!-- GLOBAL TOAST NOTIFICATION                                      -->
+  <!-- ============================================================== -->
+  <div id="toast" role="status" aria-live="polite" class="toast fixed bottom-6 right-6 max-w-sm bg-surface-container-high border border-academic-gold/30 rounded-xl shadow-2xl p-4 z-[70] flex gap-3 items-center">
+    <span id="toast-icon" class="material-symbols-outlined text-academic-gold text-2xl">check_circle</span>
+    <p id="toast-message" class="text-xs font-medium text-white leading-relaxed"></p>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- JAVASCRIPT: APPLICATION CONTROLLER & MOCK DATASTORE            -->
+  <!-- ============================================================== -->
+  <script>
+    (() => {
+      "use strict";
+
+      // ─────────────────────────────────────────────────────────────
+      // Seed Stories Data (24 realistic DU stories across 5 sectors)
+      // ─────────────────────────────────────────────────────────────
+      const seedStories = [
+        {
+          id: "DAIN-2026-01",
+          headline: "DU Robotics Team Wins 1st Place at National Autonomous AI Challenge",
+          category: "Academic",
+          subType: "Awards & Competitions",
+          date: "2026-08-22",
+          author: "Tanvir Rahman",
+          authorEmail: "tanvir.cse@du.ac.bd",
+          institution: "Department of CSE, Faculty of Science",
+          status: "Approved",
+          reach: 24800,
+          impact: "1st Place among 48 Universities",
+          summary: "An interdisciplinary student team from the Department of Computer Science & Engineering secured the championship at the National Robotics Summit with their autonomous disaster-rescue drone.",
+          detailedStory: "The four-member team designed an edge-AI powered rescue drone capable of real-time debris mapping and thermal survivor detection without GPS dependency. Their prototype outperformed 48 competing university teams in the final obstacle navigation trials.",
+          evidenceLink: "https://ieee-bangladesh.org/awards/2026-robotics-champion",
+          mediaTiers: ["National", "Campus", "Digital"]
+        },
+        {
+          id: "DAIN-2026-02",
+          headline: "DU Alumni EdTech Startup 'Medha' Closes $120K Pre-Seed Funding",
+          category: "Entrepreneurial",
+          subType: "Funding Announcement",
+          date: "2026-08-19",
+          author: "Nabila Hossain",
+          authorEmail: "nabila.alumni@du.ac.bd",
+          institution: "IBA (Institute of Business Administration)",
+          status: "Approved",
+          reach: 38500,
+          impact: "$120,000 Raised",
+          summary: "IBA alumni-founded educational platform 'Medha' raised $120,000 from regional angel investors to scale localized STEM learning modules across 40 rural districts.",
+          detailedStory: "Founded in 2024 by two Dhaka University graduates, Medha provides offline-first interactive science kits and video courses for secondary school students. The new capital will accelerate mobile app engineering and teacher onboarding.",
+          evidenceLink: "https://futurestartup.com/2026/medha-preseed-round",
+          mediaTiers: ["National", "Digital", "Byte Size"]
+        },
+        {
+          id: "DAIN-2026-03",
+          headline: "Dhaka University Clean Water Initiative Deploys Filtration to 12 Coastal Villages",
+          category: "Social Impact",
+          subType: "Community Drive",
+          date: "2026-08-15",
+          author: "Shakil Ahmed",
+          authorEmail: "shakil.geo@du.ac.bd",
+          institution: "Faculty of Earth & Environmental Sciences",
+          status: "Approved",
+          reach: 19400,
+          impact: "6,500 Villagers Provided Clean Water",
+          summary: "Student volunteers from the Department of Geology and Environment successfully installed low-cost solar-powered water desalination units in Satkhira coastal belt.",
+          detailedStory: "Addressing acute salinity in coastal drinking water, the student-led expedition constructed 12 community water filtration points using bio-sand and solar distillation, directly serving over 6,500 residents.",
+          evidenceLink: "https://unicef.org.bd/partner-initiatives/du-water-project",
+          mediaTiers: ["National", "Campus", "Byte Size"]
+        },
+        {
+          id: "DAIN-2026-04",
+          headline: "DU Chemistry Faculty Publishes Breakthrough Battery Chemistry in Nature Energy",
+          category: "Academic",
+          subType: "Research Publication",
+          date: "2026-08-10",
+          author: "Dr. Farhana Yasmin",
+          authorEmail: "f.yasmin@du.ac.bd",
+          institution: "Department of Chemistry",
+          status: "Approved",
+          reach: 41200,
+          impact: "Impact Factor 46.8 &bull; 2 Patents Filed",
+          summary: "A research team led by Dr. Farhana Yasmin synthesized a stable sodium-ion cathode material, significantly reducing EV battery manufacturing costs by 40%.",
+          detailedStory: "The publication represents three years of laboratory research funded by the Ministry of Science and Technology. The breakthrough utilizes abundant local mineral clays to replace cobalt in high-capacity energy storage cells.",
+          evidenceLink: "https://nature.com/articles/s41560-026-du-chem",
+          mediaTiers: ["National", "Digital", "Campus"]
+        },
+        {
+          id: "DAIN-2026-05",
+          headline: "Economics Graduate Appointed as Youngest Director at Central Policy Think Tank",
+          category: "Professional",
+          subType: "Leadership Appointment",
+          date: "2026-08-04",
+          author: "Mehedi Hasan",
+          authorEmail: "mehedi.econ@du.ac.bd",
+          institution: "Department of Economics",
+          status: "Approved",
+          reach: 16800,
+          impact: "Youngest Director in Institution History",
+          summary: "2022 DU Economics gold medalist Mehedi Hasan was named Director of Macroeconomic Policy Research at the National Institute of Public Governance.",
+          detailedStory: "Having authored over 12 papers on inflation dynamics and remittance growth, Mehedi will lead a team of 18 senior economists drafting fiscal policy advisories for national development planning.",
+          evidenceLink: "https://nipg.gov.bd/appointments/2026-mehedi-hasan",
+          mediaTiers: ["National", "Digital"]
+        },
+        {
+          id: "DAIN-2026-06",
+          headline: "Visually Impaired DU Law Student Secures Top Honors in National Moot Court",
+          category: "Personal",
+          subType: "Inspirational Journey",
+          date: "2026-07-28",
+          author: "Sadia Sultana",
+          authorEmail: "sadia.law@du.ac.bd",
+          institution: "Faculty of Law",
+          status: "Approved",
+          reach: 28900,
+          impact: "Best Oralist Award &bull; 1st Place",
+          summary: "Third-year law student Sadia Sultana overcame visual impairment to win the Best Oralist Trophy at the 2026 National Constitutional Moot Court Competition.",
+          detailedStory: "Using braille legal briefs and screen-reading assistive tools, Sadia argued critical constitutional law petitions before a bench of Supreme Court judges, earning unanimous praise from senior legal counsel.",
+          evidenceLink: "https://supremecourt.gov.bd/moot-court/2026-winners",
+          mediaTiers: ["National", "Campus", "Byte Size"]
+        }
+      ];
+
+      // Global State
+      let stories = JSON.parse(localStorage.getItem("dain_stories")) || seedStories;
+      let activeView = "home";
+      let wizardStep = 1;
+      let toastTimeout = null;
+
+      // ─────────────────────────────────────────────────────────────
+      // Navigation Controller
+      // ─────────────────────────────────────────────────────────────
+      window.switchView = function(viewName) {
+        activeView = viewName;
+        document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+        document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+
+        const targetPanel = document.getElementById(`view-${viewName}`);
+        if (targetPanel) targetPanel.classList.add("active");
+
+        const targetNav = document.querySelector(`.nav-item[data-view="${viewName}"]`);
+        if (targetNav) targetNav.classList.add("active");
+
+        // Update Topbar
+        const titles = {
+          home: "Discovery & Home",
+          submit: "Submit Story & Proof",
+          stories: "Verified Stories Hub",
+          academic: "Academic & Research Sector",
+          professional: "Professional Sector",
+          entrepreneurial: "Entrepreneurship & Startups",
+          "social-impact": "Social Impact Sector",
+          personal: "Personal Milestones",
+          distribution: "100+ Media Network",
+          admin: "Editorial Review Dashboard",
+          auth: "DUNITE Identity & Verification",
+          about: "About & Governance",
+          analytics: "Reach Analytics",
+          settings: "Workspace Settings",
+          support: "Support & FAQ"
+        };
+        document.getElementById("view-title").textContent = titles[viewName] || "DAIN Platform";
+        document.getElementById("topbar-crumb").textContent = `DAIN // ${viewName.toUpperCase()}`;
+
+        // Close sidebar on mobile
+        document.getElementById("sidebar").classList.remove("open");
+        document.getElementById("sidebar-scrim").classList.add("hidden");
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        // View-specific render triggers
+        if (viewName === "home") renderHomeFeatured();
+        if (viewName === "stories") renderStoriesDirectory("All");
+        if (viewName === "academic") renderSectorGrid("Academic", "academic-stories-grid");
+        if (viewName === "professional") renderSectorGrid("Professional", "professional-stories-grid");
+        if (viewName === "entrepreneurial") renderSectorGrid("Entrepreneurial", "entrepreneurial-stories-grid");
+        if (viewName === "social-impact") renderSectorGrid("Social Impact", "social-stories-grid");
+        if (viewName === "personal") renderSectorGrid("Personal", "personal-stories-grid");
+        if (viewName === "admin") renderAdminSubmissions();
+
+        location.hash = viewName;
+      };
+
+      window.openSubmitWithSector = function(sector) {
+        switchView("submit");
+        const sel = document.getElementById("category");
+        if (sel) sel.value = sector;
+      };
+
+      // ─────────────────────────────────────────────────────────────
+      // Toast System
+      // ─────────────────────────────────────────────────────────────
+      window.showToast = function(msg, icon = "check_circle") {
+        const toast = document.getElementById("toast");
+        document.getElementById("toast-message").textContent = msg;
+        document.getElementById("toast-icon").textContent = icon;
+        toast.classList.add("show");
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => toast.classList.remove("show"), 3600);
+      };
+
+      // ─────────────────────────────────────────────────────────────
+      // Render Functions
+      // ─────────────────────────────────────────────────────────────
+      function renderStoryCardHTML(story) {
+        const sectorColors = {
+          Academic: "text-sector-academic border-sector-academic/30 bg-sector-academic/10",
+          Professional: "text-sector-professional border-sector-professional/30 bg-sector-professional/10",
+          Entrepreneurial: "text-sector-entrepreneurial border-sector-entrepreneurial/30 bg-sector-entrepreneurial/10",
+          "Social Impact": "text-sector-social border-sector-social/30 bg-sector-social/10",
+          Personal: "text-sector-personal border-sector-personal/30 bg-sector-personal/10"
+        };
+        const badgeStyle = sectorColors[story.category] || "text-academic-gold border-academic-gold/30 bg-academic-gold/10";
+
+        return `
+          <div class="p-5 rounded-2xl bg-surface-container-lowest border border-border-overlay hover:border-academic-gold/40 transition-all flex flex-col justify-between group shadow-lg">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between gap-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold border ${badgeStyle}">
+                  ${story.category}
+                </span>
+                <span class="text-[11px] font-mono text-on-surface-variant">${story.date}</span>
+              </div>
+
+              <h4 class="font-bold text-sm text-white group-hover:text-academic-gold transition-colors leading-snug">
+                ${story.headline}
+              </h4>
+
+              <p class="text-xs text-on-surface-variant line-clamp-3 leading-relaxed">
+                ${story.summary}
+              </p>
+            </div>
+
+            <div class="pt-4 mt-4 border-t border-border-overlay flex items-center justify-between">
+              <div class="flex items-center gap-1.5 text-[11px] text-on-surface-variant font-mono">
+                <span class="material-symbols-outlined text-sm text-academic-gold">verified</span>
+                <span class="truncate max-w-[110px]">${story.author}</span>
+              </div>
+
+              <button onclick="openPressKit('${story.id}')" class="text-xs font-mono font-semibold text-academic-gold hover:text-white flex items-center gap-0.5">
+                <span>View Press Kit</span>
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderHomeFeatured() {
+        const container = document.getElementById("home-featured-grid");
+        if (!container) return;
+        const approved = stories.filter(s => s.status === "Approved").slice(0, 3);
+        container.innerHTML = approved.map(renderStoryCardHTML).join("");
+      }
+
+      function renderStoriesDirectory(filterSector = "All") {
+        const container = document.getElementById("stories-directory-grid");
+        if (!container) return;
+        let filtered = stories.filter(s => s.status === "Approved");
+        if (filterSector !== "All") {
+          filtered = filtered.filter(s => s.category.toLowerCase() === filterSector.toLowerCase());
+        }
+        container.innerHTML = filtered.length > 0 
+          ? filtered.map(renderStoryCardHTML).join("") 
+          : `<p class="col-span-3 text-center py-12 text-on-surface-variant font-mono text-xs">No verified stories found in this sector.</p>`;
+      }
+
+      function renderSectorGrid(sector, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const filtered = stories.filter(s => s.category.toLowerCase() === sector.toLowerCase());
+        container.innerHTML = filtered.length > 0 
+          ? filtered.map(renderStoryCardHTML).join("")
+          : `<p class="col-span-3 text-center py-12 text-on-surface-variant font-mono text-xs">No stories yet. Be the first to submit!</p>`;
+      }
+
+      function renderAdminSubmissions() {
+        const table = document.getElementById("admin-submissions-table");
+        if (!table) return;
+        const filterVal = document.getElementById("admin-status-filter")?.value || "All";
+        let filtered = stories;
+        if (filterVal !== "All") {
+          filtered = filtered.filter(s => s.status === filterVal);
+        }
+
+        table.innerHTML = filtered.map(s => `
+          <tr class="hover:bg-surface-container-high/40 transition-colors">
+            <td class="p-3">
+              <p class="font-bold text-white max-w-[280px] truncate">${s.headline}</p>
+              <span class="text-[10px] font-mono text-on-surface-variant">${s.id} &bull; ${s.date}</span>
+            </td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-surface-navy border border-border-overlay">${s.category}</span>
+            </td>
+            <td class="p-3">
+              <p class="font-medium text-white">${s.author}</p>
+              <span class="text-[10px] font-mono text-on-surface-variant">${s.authorEmail || "du.ac.bd"}</span>
+            </td>
+            <td class="p-3">
+              <span class="status-chip ${s.status === 'Approved' ? 'status-approved' : 'status-review'} px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono">
+                ${s.status}
+              </span>
+            </td>
+            <td class="p-3 text-right space-x-2">
+              <button onclick="openPressKit('${s.id}')" class="text-academic-gold hover:underline font-mono text-xs">Review</button>
+              ${s.status !== 'Approved' ? `<button onclick="approveAdminStory('${s.id}')" class="px-2 py-1 bg-green-600 hover:bg-green-500 text-white rounded text-[10px] font-bold uppercase font-mono">Approve</button>` : ''}
+            </td>
+          </tr>
+        `).join("");
+      }
+
+      window.approveAdminStory = function(id) {
+        const target = stories.find(s => s.id === id);
+        if (target) {
+          target.status = "Approved";
+          target.reach = Math.floor(Math.random() * 20000) + 15000;
+          localStorage.setItem("dain_stories", JSON.stringify(stories));
+          renderAdminSubmissions();
+          showToast(`Story ${id} approved and routed to media syndication!`, "campaign");
+        }
+      };
+
+      // ─────────────────────────────────────────────────────────────
+      // Exploded Press Kit Modal
+      // ─────────────────────────────────────────────────────────────
+      window.openPressKit = function(id) {
+        const story = stories.find(s => s.id === id);
+        if (!story) return;
+
+        document.getElementById("dialog-story-id").textContent = story.id;
+        document.getElementById("dialog-body").innerHTML = `
+          <!-- Exploded Layer 1: Headline & Media Release Lead -->
+          <div class="p-4 rounded-xl bg-surface-container border border-border-overlay space-y-2">
+            <div class="flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
+              <span class="text-dunite-red font-bold uppercase">PRESS RELEASE // FOR IMMEDIATE RELEASE</span>
+              <span>${story.date}</span>
+            </div>
+            <h2 class="font-display text-xl font-bold text-white">${story.headline}</h2>
+            <div class="flex flex-wrap gap-2 text-xs font-mono text-on-surface-variant pt-1">
+              <span class="px-2 py-0.5 rounded bg-surface-navy border border-border-overlay text-academic-gold">${story.category}</span>
+              <span class="px-2 py-0.5 rounded bg-surface-navy border border-border-overlay">${story.subType || 'Milestone'}</span>
+              <span class="px-2 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/20">&check; Authenticated DU Community</span>
+            </div>
+          </div>
+
+          <!-- Exploded Layer 2: Executive Summary for Journalists -->
+          <div class="p-4 rounded-xl bg-surface-container-lowest border border-academic-gold/30 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs uppercase font-mono font-bold text-academic-gold flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">summarize</span>
+                Executive Summary (Lead Paragraph)
+              </span>
+              <button onclick="navigator.clipboard.writeText('${story.summary.replace(/'/g, "\\'")}'); showToast('Executive summary copied to clipboard!', 'content_copy')" class="text-[11px] font-mono text-academic-gold hover:underline">
+                Copy for Press
+              </button>
+            </div>
+            <p class="text-xs text-on-surface leading-relaxed">${story.summary}</p>
+          </div>
+
+          <!-- Exploded Layer 3: Detailed Narrative Story -->
+          <div class="p-4 rounded-xl bg-surface-container border border-border-overlay space-y-2">
+            <span class="text-xs uppercase font-mono font-bold text-white">Detailed Story &amp; Background</span>
+            <p class="text-xs text-on-surface-variant leading-relaxed">${story.detailedStory || story.summary}</p>
+          </div>
+
+          <!-- Exploded Layer 4: Proof & Verification Vault -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="p-3 rounded-xl bg-surface-navy border border-border-overlay space-y-1">
+              <span class="text-on-surface-variant font-mono block text-[10px] uppercase">Primary Verification Link</span>
+              <a href="${story.evidenceLink || '#'}" target="_blank" class="text-academic-gold hover:underline font-mono truncate block">
+                ${story.evidenceLink || 'Verified via DUNITE Archives'}
+              </a>
+            </div>
+            <div class="p-3 rounded-xl bg-surface-navy border border-border-overlay space-y-1">
+              <span class="text-on-surface-variant font-mono block text-[10px] uppercase">Department / Affiliation</span>
+              <span class="font-bold text-white block truncate">${story.institution}</span>
+            </div>
+          </div>
+
+          <!-- Exploded Layer 5: Verified Contact & Syndication Target -->
+          <div class="p-4 rounded-xl bg-surface-container-lowest border border-border-overlay flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span class="text-[10px] font-mono uppercase text-on-surface-variant">Media Contact Details</span>
+              <p class="text-xs font-bold text-white">${story.author} &bull; <span class="font-mono text-academic-gold">${story.authorEmail || 'contact@du.ac.bd'}</span></p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="navigator.clipboard.writeText('# ${story.headline}\\n\\n${story.summary}\\n\\n${story.detailedStory || story.summary}'); showToast('Full press release markdown copied!', 'assignment_turned_in')" class="px-3 py-1.5 rounded-lg bg-surface-navy border border-border-overlay text-xs font-mono text-white hover:border-academic-gold transition-colors">
+                Copy Full Release
+              </button>
+              <button onclick="showToast('Press kit PDF download started.', 'download')" class="px-3 py-1.5 rounded-lg bg-dunite-red text-white text-xs font-mono font-bold hover:bg-red-700 transition-colors">
+                Download Press Kit
+              </button>
+            </div>
+          </div>
+        `;
+
+        document.getElementById("story-dialog").showModal();
+      };
+
+      // ─────────────────────────────────────────────────────────────
+      // Submission Wizard Logic
+      // ─────────────────────────────────────────────────────────────
+      const btnNext = document.getElementById("btn-wizard-next");
+      const btnBack = document.getElementById("btn-wizard-back");
+
+      function updateWizardUI() {
+        document.querySelectorAll(".form-step").forEach(step => {
+          step.classList.toggle("active", Number(step.dataset.formStep) === wizardStep);
+        });
+
+        document.querySelectorAll(".form-dot").forEach(dot => {
+          const num = Number(dot.dataset.formDot);
+          dot.classList.toggle("active", num === wizardStep);
+          dot.classList.toggle("complete", num < wizardStep);
+          dot.textContent = num < wizardStep ? "✓" : num;
+        });
+
+        btnBack.classList.toggle("hidden", wizardStep === 1);
+        document.getElementById("wizard-next-label").textContent = wizardStep === 3 ? "Submit for 3-Stage Validation" : "Continue to Next Step";
+
+        if (wizardStep === 3) populateReviewStep();
+      }
+
+      function populateReviewStep() {
+        const cat = document.getElementById("category").value;
+        const sub = document.getElementById("sub-type").value;
+        const head = document.getElementById("headline").value;
+        const summ = document.getElementById("summary").value;
+        const date = document.getElementById("achievement-date").value;
+        const inst = document.getElementById("institution").value;
+        const imp = document.getElementById("impact").value;
+        const email = document.getElementById("author-email").value;
+
+        document.getElementById("review-category-badge").textContent = `${cat.toUpperCase()} // ${sub.toUpperCase() || 'MILESTONE'}`;
+        document.getElementById("review-headline").textContent = head || "Untitled Story Headline";
+        document.getElementById("review-meta").textContent = `Affiliation: ${inst || 'Dhaka University'} • Date: ${date || '2026-08-29'} • Submitter: ${email || 'du.ac.bd'}`;
+        document.getElementById("review-summary").textContent = summ || "No summary entered.";
+        document.getElementById("review-impact").textContent = imp || "Standard Impact";
+        document.getElementById("review-evidence").textContent = document.getElementById("evidence-link").value ? "1 Verified URL Linked" : "Attached Document Evidence";
+      }
+
+      if (btnNext) {
+        btnNext.addEventListener("click", () => {
+          if (wizardStep === 1) {
+            const head = document.getElementById("headline").value.trim();
+            const summ = document.getElementById("summary").value.trim();
+            const cat = document.getElementById("category").value;
+            if (!cat || head.length < 10 || summ.length < 30) {
+              showToast("Please fill in the Category, Headline (min 10 chars) and Summary (min 30 chars).", "error");
+              return;
+            }
+            wizardStep = 2;
+            updateWizardUI();
+          } else if (wizardStep === 2) {
+            const inst = document.getElementById("institution").value.trim();
+            const date = document.getElementById("achievement-date").value;
+            const email = document.getElementById("author-email").value.trim();
+            if (!inst || !date || !email) {
+              showToast("Please complete the required institution, date, and email fields.", "error");
+              return;
+            }
+            wizardStep = 3;
+            updateWizardUI();
+          } else if (wizardStep === 3) {
+            if (!document.getElementById("confirm-box").checked) {
+              showToast("Please check the confirmation box before submitting.", "error");
+              return;
+            }
+            submitStoryToPipeline();
+          }
+        });
+      }
+
+      if (btnBack) {
+        btnBack.addEventListener("click", () => {
+          wizardStep = Math.max(1, wizardStep - 1);
+          updateWizardUI();
+        });
+      }
+
+      // Live DU Email Check
+      window.checkAuthEmail = function(val) {
+        const tag = document.getElementById("auth-du-tag");
+        if (tag) tag.classList.toggle("hidden", !val.trim().toLowerCase().endsWith("@du.ac.bd"));
+      };
+
+      const emailInput = document.getElementById("author-email");
+      if (emailInput) {
+        emailInput.addEventListener("input", (e) => {
+          const isDU = e.target.value.trim().toLowerCase().endsWith("@du.ac.bd");
+          const badge = document.getElementById("du-badge");
+          if (badge) badge.classList.toggle("hidden", !isDU);
+        });
+      }
+
+      // Character counters
+      const headlineInput = document.getElementById("headline");
+      if (headlineInput) {
+        headlineInput.addEventListener("input", e => {
+          document.getElementById("headline-count").textContent = `${e.target.value.length}/120`;
+        });
+      }
+      const summaryInput = document.getElementById("summary");
+      if (summaryInput) {
+        summaryInput.addEventListener("input", e => {
+          document.getElementById("summary-count").textContent = `${e.target.value.length}/600`;
+        });
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // Live 3-Stage Validation Simulation
+      // ─────────────────────────────────────────────────────────────
+      async function runValidationPipelineAsync(newStory) {
+        document.getElementById("validation-section").scrollIntoView({ behavior: "smooth", block: "start" });
+        const log = document.getElementById("pipeline-log");
+
+        const stages = [
+          { name: "01: Automated Validation", msg: "Scanning @du.ac.bd identity & document completeness... PASSED (100% Validated)" },
+          { name: "02: Editorial Fact Verification", msg: "Assessing newsworthiness and evidence links... PASSED (Score: 96/100)" },
+          { name: "03: Media Routing Authorization", msg: "Authorizing concentric dispatch to 100+ partner newsrooms... ACTIVATED" }
+        ];
+
+        for (let i = 0; i < 3; i++) {
+          const st = document.getElementById(`validation-stage-${i}`);
+          st.classList.add("active");
+          st.querySelector(".stage-status").textContent = "Running...";
+          st.querySelector(".stage-result").textContent = "progress_activity";
+          log.textContent = `SYSTEM // Running Stage ${stages[i].name}...`;
+          await new Promise(r => setTimeout(r, 900));
+
+          st.classList.remove("active");
+          st.classList.add("complete");
+          st.querySelector(".stage-status").textContent = "Approved";
+          st.querySelector(".stage-result").textContent = "check_circle";
+          st.querySelector(".stage-result").className = "stage-result material-symbols-outlined text-academic-gold text-base";
+          log.textContent = `PASS // Stage ${stages[i].msg}`;
+
+          if (i < 2) {
+            const conn = document.getElementById(`validation-connector-${i}`);
+            conn.classList.add("active");
+            await new Promise(r => setTimeout(r, 450));
+            conn.classList.remove("active");
+            conn.classList.add("complete");
+          }
+        }
+
+        log.textContent = `SUCCESS // Story ${newStory.id} approved and broadcast across 100+ media channels.`;
+        showToast("Story passed all 3 validation stages and was published!", "verified");
+
+        newStory.status = "Approved";
+        stories.unshift(newStory);
+        localStorage.setItem("dain_stories", JSON.stringify(stories));
+
+        // Reset wizard
+        document.getElementById("story-form").reset();
+        wizardStep = 1;
+        updateWizardUI();
+      }
+
+      function submitStoryToPipeline() {
+        const newStory = {
+          id: `DAIN-2026-${String(Date.now()).slice(-3)}`,
+          headline: document.getElementById("headline").value.trim(),
+          category: document.getElementById("category").value,
+          subType: document.getElementById("sub-type").value.trim(),
+          date: document.getElementById("achievement-date").value || new Date().toISOString().slice(0, 10),
+          author: document.getElementById("settings-name")?.value || "DU Contributor",
+          authorEmail: document.getElementById("author-email").value.trim(),
+          institution: document.getElementById("institution").value.trim(),
+          status: "In Review",
+          reach: Math.floor(Math.random() * 25000) + 12000,
+          impact: document.getElementById("impact").value.trim() || "Verified Milestone",
+          summary: document.getElementById("summary").value.trim(),
+          detailedStory: document.getElementById("summary").value.trim(),
+          evidenceLink: document.getElementById("evidence-link").value.trim(),
+          mediaTiers: ["National", "Digital", "Campus"]
+        };
+
+        runValidationPipelineAsync(newStory);
+      }
+
+      document.getElementById("run-simulation-btn")?.addEventListener("click", () => {
+        const demoStory = {
+          id: "DAIN-2026-DEMO",
+          headline: "Demonstration Story: DU Quantum Lab Breakthrough",
+          category: "Academic",
+          summary: "Demonstration run of the DAIN automated validation and editorial syndication engine.",
+          author: "Research Team",
+          institution: "Faculty of Science",
+          status: "In Review"
+        };
+        runValidationPipelineAsync(demoStory);
+      });
+
+      // ─────────────────────────────────────────────────────────────
+      // Filter Pills on Stories Hub
+      // ─────────────────────────────────────────────────────────────
+      document.querySelectorAll(".filter-pill").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".filter-pill").forEach(p => {
+            p.classList.remove("active", "border-academic-gold", "bg-academic-gold/10", "text-academic-gold");
+            p.classList.add("border-border-overlay", "bg-surface-container", "text-on-surface-variant");
+          });
+          btn.classList.add("active", "border-academic-gold", "bg-academic-gold/10", "text-academic-gold");
+          btn.classList.remove("border-border-overlay", "bg-surface-container", "text-on-surface-variant");
+          renderStoriesDirectory(btn.dataset.sector);
+        });
+      });
+
+      // ─────────────────────────────────────────────────────────────
+      // Global Search
+      // ─────────────────────────────────────────────────────────────
+      document.getElementById("global-search")?.addEventListener("input", e => {
+        const query = e.target.value.trim().toLowerCase();
+        if (!query) {
+          renderStoriesDirectory("All");
+          return;
+        }
+        const filtered = stories.filter(s => 
+          s.headline.toLowerCase().includes(query) ||
+          s.summary.toLowerCase().includes(query) ||
+          s.author.toLowerCase().includes(query) ||
+          s.category.toLowerCase().includes(query)
+        );
+        const container = document.getElementById("stories-directory-grid");
+        if (activeView !== "stories") switchView("stories");
+        if (container) {
+          container.innerHTML = filtered.length > 0
+            ? filtered.map(renderStoryCardHTML).join("")
+            : `<p class="col-span-3 text-center py-12 text-on-surface-variant font-mono text-xs">No matching stories found for "${escapeHtml(query)}".</p>`;
+        }
+      });
+
+      function escapeHtml(str) {
+        return String(str || "").replace(/[&<>'"]/g, tag => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
+        }[tag] || tag));
+      }
+
+      // Sidebar Mobile Toggles
+      document.getElementById("open-sidebar")?.addEventListener("click", () => {
+        document.getElementById("sidebar").classList.add("open");
+        document.getElementById("sidebar-scrim").classList.remove("hidden");
+      });
+      document.getElementById("close-sidebar")?.addEventListener("click", () => {
+        document.getElementById("sidebar").classList.remove("open");
+        document.getElementById("sidebar-scrim").classList.add("hidden");
+      });
+      document.getElementById("sidebar-scrim")?.addEventListener("click", () => {
+        document.getElementById("sidebar").classList.remove("open");
+        document.getElementById("sidebar-scrim").classList.add("hidden");
+      });
+
+      // Setup click listeners on all nav items
+      document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
+        btn.addEventListener("click", () => switchView(btn.dataset.view));
+      });
+
+      // Settings & Auth Handlers
+      window.saveSettings = function() {
+        const name = document.getElementById("settings-name").value;
+        document.getElementById("sidebar-user-name").textContent = name || "DU Contributor";
+        showToast("Settings and contributor preferences saved.", "settings");
+      };
+
+      window.handleAuthSubmit = function(e) {
+        e.preventDefault();
+        const name = document.getElementById("auth-name").value;
+        const email = document.getElementById("auth-email-input").value;
+        const role = document.getElementById("auth-role").value;
+        document.getElementById("sidebar-user-name").textContent = name;
+        showToast(`Authenticated as ${name} (${role})`, "verified_user");
+        switchView("home");
+      };
+
+      window.handleSupportSubmit = function(e) {
+        e.preventDefault();
+        e.target.reset();
+        showToast("Editorial inquiry dispatched to the Board.", "mail");
+      };
+
+      // Initial View Boot
+      const hash = location.hash.replace("#", "") || "home";
+      switchView(hash);
+
+    })();
+  </script>
+</body>
+</html>
