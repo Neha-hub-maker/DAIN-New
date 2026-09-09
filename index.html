@@ -951,13 +951,21 @@
                 </div>
 
                 <div>
-                  <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="headline">Media Headline *</label>
-                  <input id="headline" name="headline" required minlength="10" maxlength="120" type="text" placeholder="Impactful release headline..." class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2 px-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white" />
+                  <div class="flex justify-between items-center mb-1">
+                    <label class="text-xs text-on-surface-variant font-medium" for="headline">Media Headline *</label>
+                    <span id="headline-count" class="text-[10px] font-mono text-on-surface-variant">0 / 120 (min 10)</span>
+                  </div>
+                  <input id="headline" name="headline" required minlength="10" maxlength="120" type="text" placeholder="Impactful release headline..." class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2.5 px-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white" />
+                  <p class="text-[10px] text-on-surface-variant font-mono mt-1">Concise, newsworthy statement of the milestone.</p>
                 </div>
 
                 <div>
-                  <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="summary">Executive Summary *</label>
+                  <div class="flex justify-between items-center mb-1">
+                    <label class="text-xs text-on-surface-variant font-medium" for="summary">Executive Summary *</label>
+                    <span id="summary-count" class="text-[10px] font-mono text-on-surface-variant">0 / 600 (min 30)</span>
+                  </div>
                   <textarea id="summary" name="summary" required minlength="30" maxlength="600" rows="3" placeholder="2-3 sentences for journalists..." class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2 px-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white resize-none"></textarea>
+                  <p class="text-[10px] text-on-surface-variant font-mono mt-1">Executive hook covering who, what, and institutional significance.</p>
                 </div>
               </div>
 
@@ -988,6 +996,7 @@
                 <div>
                   <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="author-email">DU Institutional Email (@du.ac.bd) *</label>
                   <input id="author-email" name="authorEmail" required type="email" placeholder="student_id@du.ac.bd" class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2 px-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white" />
+                  <p class="text-[10px] text-on-surface-variant font-mono mt-1">Verified against Dhaka University institutional active records.</p>
                 </div>
               </div>
 
@@ -1006,7 +1015,13 @@
               </div>
 
               <div class="flex items-center justify-between pt-3 border-t border-border-light">
-                <button id="btn-wizard-back" type="button" class="hidden px-4 py-2 rounded-xl border border-border-light text-xs text-on-surface hover:bg-surface-subtle apple-tap">Back</button>
+                <div class="flex items-center gap-2">
+                  <button id="btn-wizard-back" type="button" class="hidden px-4 py-2 rounded-xl border border-border-light text-xs text-on-surface hover:bg-surface-subtle apple-tap">Back</button>
+                  <button id="btn-reset-draft" type="button" class="text-xs text-on-surface-variant hover:text-dunite-red font-mono apple-tap flex items-center gap-1 px-2 py-1.5" title="Reset all input fields">
+                    <span class="material-symbols-outlined text-sm">delete_sweep</span>
+                    <span>Reset Draft</span>
+                  </button>
+                </div>
                 <button id="btn-wizard-next" type="button" class="ml-auto px-5 py-2.5 bg-dunite-red hover:bg-red-700 text-white rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 shadow-apple apple-tap">
                   <span id="wizard-next-label">Continue to Proof</span>
                   <span class="material-symbols-outlined text-base">arrow_forward</span>
@@ -1436,6 +1451,7 @@
         };
         document.getElementById("view-title").textContent = titles[viewName] || "DAIN";
         document.getElementById("topbar-crumb").textContent = `DAIN // ${viewName.toUpperCase()}`;
+        document.title = `DAIN | ${titles[viewName] || 'PR Platform'} • Dhaka University`;
 
         document.getElementById("sidebar").classList.remove("open");
         document.getElementById("sidebar-scrim").classList.add("hidden");
@@ -1748,6 +1764,87 @@
         }
         showToast("Validation demonstration completed successfully!", "verified");
       });
+
+      // Rule 18 (Smart Defaults) & Rule 36 (State Persistence) & Rule 39 (Input Validation)
+      const headlineInput = document.getElementById("headline");
+      const summaryInput = document.getElementById("summary");
+      const headlineCounter = document.getElementById("headline-count");
+      const summaryCounter = document.getElementById("summary-count");
+      const dateInput = document.getElementById("achievement-date");
+
+      // Smart default today's date
+      if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().slice(0, 10);
+      }
+
+      function updateCounters() {
+        if (headlineInput && headlineCounter) {
+          const len = headlineInput.value.length;
+          headlineCounter.textContent = `${len} / 120 (min 10)`;
+          headlineCounter.classList.toggle("text-dunite-red", len > 0 && len < 10);
+          headlineCounter.classList.toggle("text-academic-gold", len >= 10);
+        }
+        if (summaryInput && summaryCounter) {
+          const len = summaryInput.value.length;
+          summaryCounter.textContent = `${len} / 600 (min 30)`;
+          summaryCounter.classList.toggle("text-dunite-red", len > 0 && len < 30);
+          summaryCounter.classList.toggle("text-academic-gold", len >= 30);
+        }
+      }
+
+      function saveFormDraft() {
+        const draft = {
+          category: document.getElementById("category")?.value || "",
+          subType: document.getElementById("sub-type")?.value || "",
+          headline: document.getElementById("headline")?.value || "",
+          summary: document.getElementById("summary")?.value || "",
+          date: document.getElementById("achievement-date")?.value || "",
+          institution: document.getElementById("institution")?.value || "",
+          impact: document.getElementById("impact")?.value || "",
+          evidenceLink: document.getElementById("evidence-link")?.value || "",
+          authorEmail: document.getElementById("author-email")?.value || ""
+        };
+        sessionStorage.setItem("dain_form_draft", JSON.stringify(draft));
+      }
+
+      function restoreFormDraft() {
+        try {
+          const raw = sessionStorage.getItem("dain_form_draft");
+          if (!raw) return;
+          const draft = JSON.parse(raw);
+          if (draft.category) document.getElementById("category").value = draft.category;
+          if (draft.subType) document.getElementById("sub-type").value = draft.subType;
+          if (draft.headline) document.getElementById("headline").value = draft.headline;
+          if (draft.summary) document.getElementById("summary").value = draft.summary;
+          if (draft.date) document.getElementById("achievement-date").value = draft.date;
+          if (draft.institution) document.getElementById("institution").value = draft.institution;
+          if (draft.impact) document.getElementById("impact").value = draft.impact;
+          if (draft.evidenceLink) document.getElementById("evidence-link").value = draft.evidenceLink;
+          if (draft.authorEmail) document.getElementById("author-email").value = draft.authorEmail;
+          updateCounters();
+        } catch (e) {}
+      }
+
+      headlineInput?.addEventListener("input", () => { updateCounters(); saveFormDraft(); });
+      summaryInput?.addEventListener("input", () => { updateCounters(); saveFormDraft(); });
+      document.getElementById("story-form")?.addEventListener("input", saveFormDraft);
+
+      // Rule 38: Destructive Action Protection
+      document.getElementById("btn-reset-draft")?.addEventListener("click", () => {
+        if (confirm("Are you sure you want to reset and clear your story draft? This action cannot be undone.")) {
+          document.getElementById("story-form").reset();
+          if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+          sessionStorage.removeItem("dain_form_draft");
+          wizardStep = 1;
+          updateWizardUI();
+          updateCounters();
+          showToast("Draft form cleared.", "delete_sweep");
+        }
+      });
+
+      // Restore saved draft on load
+      restoreFormDraft();
+      updateCounters();
 
     })();
   </script>
