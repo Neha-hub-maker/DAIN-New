@@ -1,8 +1,11 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html class="light" lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta name="description" content="DAIN - Official PR & Media Amplification Platform for Dhaka University Ecosystem." />
   <title>DAIN | Official PR Platform for Dhaka University Ecosystem</title>
 
@@ -14,20 +17,19 @@
       theme: {
         extend: {
           colors: {
-            "border-overlay": "rgba(255, 255, 255, 0.08)",
-            "border-subtle": "rgba(255, 255, 255, 0.04)",
-            "surface-container": "#14171d",
-            "surface-container-high": "#1d212a",
-            "surface-container-highest": "#272b36",
-            "surface-container-lowest": "#0c0e12",
-            "surface-navy": "#000A1E",
-            "surface-navy-card": "#060f24",
-            "on-surface": "#f1f2f6",
-            "on-surface-variant": "#9da0ad",
+            "canvas-light": "#F8F9FB",
+            "surface-card": "#FFFFFF",
+            "surface-subtle": "#F1F3F7",
+            "surface-muted": "#E5E8EE",
+            "border-light": "rgba(0, 0, 0, 0.08)",
+            "border-subtle": "rgba(0, 0, 0, 0.04)",
+            "on-surface": "#0F172A",
+            "on-surface-variant": "#64748B",
             "dunite-red": "#BE0000",
-            "dunite-red-glow": "rgba(190, 0, 0, 0.35)",
-            "academic-gold": "#FED488",
-            "academic-gold-glow": "rgba(254, 212, 136, 0.25)"
+            "dunite-red-glow": "rgba(190, 0, 0, 0.15)",
+            "academic-gold": "#B8860B",
+            "academic-gold-light": "#FFFDF5",
+            "academic-gold-border": "rgba(184, 134, 11, 0.25)"
           },
           borderRadius: {
             DEFAULT: "0.5rem",
@@ -44,9 +46,10 @@
             mono: ["JetBrains Mono", "SF Mono", "monospace"]
           },
           boxShadow: {
-            apple: "0 8px 30px rgba(0, 0, 0, 0.35)",
-            glow: "0 0 25px rgba(190, 0, 0, 0.25)",
-            "gold-glow": "0 0 25px rgba(254, 212, 136, 0.2)"
+            apple: "0 2px 16px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02)",
+            "apple-hover": "0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04)",
+            glow: "0 0 25px rgba(190, 0, 0, 0.2)",
+            "gold-glow": "0 0 25px rgba(184, 134, 11, 0.2)"
           }
         }
       }
@@ -68,24 +71,25 @@
 
   <style>
     * { box-sizing: border-box; }
-    html { color-scheme: dark; scroll-behavior: smooth; }
+    html { color-scheme: light; scroll-behavior: smooth; }
     body {
       margin: 0;
       font-family: "Inter", sans-serif;
-      background: #000A1E;
-      color: #f1f2f6;
+      background: #F8F9FB;
+      color: #0F172A;
       overflow-x: hidden;
       letter-spacing: -0.011em;
     }
     h1, h2, h3, h4, h5, h6 {
       font-family: "Public Sans", sans-serif;
       letter-spacing: -0.025em;
+      color: #0F172A;
     }
     .font-mono { font-family: "JetBrains Mono", monospace; }
 
-    /* Apple-like Fluid Motion & Micro-interactions */
+    /* Apple-like Smooth Micro-interactions */
     .apple-motion {
-      transition: all 260ms cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 240ms cubic-bezier(0.16, 1, 0.3, 1);
     }
     .apple-tap:active {
       transform: scale(0.97);
@@ -93,7 +97,7 @@
     }
 
     button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-      outline: 2px solid #FED488;
+      outline: 2px solid #BE0000;
       outline-offset: 2px;
     }
 
@@ -102,11 +106,11 @@
       vertical-align: middle;
     }
 
-    /* Skeleton Loader Shimmer */
+    /* Skeleton Loader Shimmer (Light Mode) */
     .skeleton {
       position: relative;
       overflow: hidden;
-      background: rgba(255, 255, 255, 0.05);
+      background: #EAECEF;
       border-radius: 0.75rem;
     }
     .skeleton::after {
@@ -117,10 +121,10 @@
       background: linear-gradient(
         90deg,
         transparent,
-        rgba(255, 255, 255, 0.08),
+        rgba(255, 255, 255, 0.65),
         transparent
       );
-      animation: shimmer 1.4s infinite;
+      animation: shimmer 1.3s infinite;
     }
     @keyframes shimmer {
       100% { transform: translateX(100%); }
@@ -131,7 +135,7 @@
       display: none;
       opacity: 0;
       transform: translateY(6px);
-      transition: opacity 220ms ease, transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 200ms ease, transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
     }
     .view-panel.active {
       display: block;
@@ -145,20 +149,22 @@
       transition: all 180ms ease;
     }
     .nav-item:hover {
-      color: #FED488;
-      background: #14171d;
+      color: #BE0000;
+      background: #F1F3F7;
     }
     .nav-item.active {
-      color: #ffffff;
+      color: #BE0000;
       border-left-color: #BE0000;
-      background: #1d212a;
+      background: #FFFFFF;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      font-weight: 600;
     }
     .nav-item.active .material-symbols-outlined {
-      color: #FED488;
+      color: #BE0000;
       font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24;
     }
 
-    /* Stepper & Wizard */
+    /* Form Steps */
     .form-step { display: none; animation: viewIn 200ms ease-out; }
     .form-step.active { display: block; }
     @keyframes viewIn {
@@ -170,54 +176,55 @@
       color: white;
       border-color: #BE0000;
       background: #BE0000;
-      box-shadow: 0 0 14px rgba(190, 0, 0, 0.45);
+      box-shadow: 0 0 12px rgba(190, 0, 0, 0.35);
     }
     .form-dot.complete {
-      color: #FED488;
-      border-color: #FED488;
-      background: rgba(254, 212, 136, 0.12);
+      color: #B8860B;
+      border-color: #B8860B;
+      background: rgba(184, 134, 11, 0.08);
     }
 
-    /* 3-Stage Pipeline Tracks */
+    /* 3-Stage Pipeline Tracks in Light Mode */
     .validation-track {
       display: grid;
-      grid-template-columns: 1fr 44px 1fr 44px 1fr;
+      grid-template-columns: 1fr 40px 1fr 40px 1fr;
       align-items: stretch;
       gap: 12px;
     }
     .validation-stage {
       min-height: 180px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: #0c0e12;
-      transition: all 260ms ease;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      background: #FFFFFF;
+      transition: all 240ms ease;
     }
     .validation-stage .stage-node {
-      width: 42px;
-      height: 42px;
-      color: #9da0ad;
-      border: 2px solid rgba(255, 255, 255, 0.12);
-      background: #000A1E;
-      transition: all 260ms ease;
+      width: 40px;
+      height: 40px;
+      color: #64748B;
+      border: 2px solid rgba(0, 0, 0, 0.08);
+      background: #F8F9FB;
+      transition: all 240ms ease;
     }
     .validation-stage.active {
       border-color: #BE0000;
-      background: linear-gradient(145deg, rgba(190, 0, 0, 0.18), #0c0e12 70%);
+      background: #FFFDFD;
       transform: translateY(-2px);
-      box-shadow: 0 0 20px rgba(190, 0, 0, 0.25);
+      box-shadow: 0 4px 20px rgba(190, 0, 0, 0.12);
     }
     .validation-stage.active .stage-node {
       color: white;
       border-color: #BE0000;
       background: #BE0000;
-      box-shadow: 0 0 14px rgba(190, 0, 0, 0.6);
+      box-shadow: 0 0 12px rgba(190, 0, 0, 0.4);
     }
     .validation-stage.complete {
-      border-color: rgba(254, 212, 136, 0.45);
+      border-color: rgba(184, 134, 11, 0.4);
+      background: #FFFEFA;
     }
     .validation-stage.complete .stage-node {
-      color: #FED488;
-      border-color: #FED488;
-      background: rgba(254, 212, 136, 0.12);
+      color: #B8860B;
+      border-color: #B8860B;
+      background: rgba(184, 134, 11, 0.1);
     }
 
     .validation-connector {
@@ -230,7 +237,7 @@
       content: "";
       width: 100%;
       height: 2px;
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.08);
     }
     .validation-connector::after {
       content: "";
@@ -238,27 +245,27 @@
       left: -100%;
       width: 100%;
       height: 2px;
-      background: linear-gradient(90deg, transparent, #FED488, #BE0000);
+      background: linear-gradient(90deg, transparent, #B8860B, #BE0000);
     }
     .validation-connector.active::after {
       animation: connectorFlow 750ms ease forwards;
     }
     .validation-connector.complete::before {
-      background: rgba(254, 212, 136, 0.5);
+      background: rgba(184, 134, 11, 0.5);
     }
     @keyframes connectorFlow { to { left: 100%; } }
 
     /* Badges & Chips */
     .status-chip { border: 1px solid; }
     .status-approved {
-      color: #FED488;
-      border-color: rgba(254, 212, 136, 0.35);
-      background: rgba(254, 212, 136, 0.08);
+      color: #B8860B;
+      border-color: rgba(184, 134, 11, 0.35);
+      background: rgba(184, 134, 11, 0.08);
     }
     .status-review {
-      color: #e2e2e8;
-      border-color: rgba(255, 255, 255, 0.18);
-      background: rgba(255, 255, 255, 0.05);
+      color: #0F172A;
+      border-color: rgba(0, 0, 0, 0.12);
+      background: rgba(0, 0, 0, 0.04);
     }
 
     /* Toast Notification */
@@ -266,7 +273,7 @@
       opacity: 0;
       pointer-events: none;
       transform: translateY(12px) scale(0.97);
-      transition: all 240ms cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
     }
     .toast.show {
       opacity: 1;
@@ -276,14 +283,14 @@
 
     /* Dialog Backdrop with Blur */
     dialog::backdrop {
-      background: rgba(0, 10, 30, 0.85);
-      backdrop-filter: blur(8px);
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(6px);
     }
 
     /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #0c0e12; }
-    ::-webkit-scrollbar-thumb { background: #272b36; border-radius: 9999px; }
+    ::-webkit-scrollbar-track { background: #F1F3F7; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: #BE0000; }
 
     @media (max-width: 1023px) {
@@ -297,48 +304,48 @@
   </style>
 </head>
 
-<body class="bg-surface-navy text-on-surface min-h-screen selection:bg-dunite-red selection:text-white">
+<body class="bg-canvas-light text-on-surface min-h-screen selection:bg-dunite-red selection:text-white">
   <!-- Mobile Scrim Overlay -->
-  <div id="sidebar-scrim" class="sidebar-scrim fixed inset-0 bg-black/80 z-40 hidden backdrop-blur-sm" aria-hidden="true"></div>
+  <div id="sidebar-scrim" class="sidebar-scrim fixed inset-0 bg-slate-900/40 z-40 hidden backdrop-blur-sm" aria-hidden="true"></div>
 
   <!-- ==================================================================== -->
-  <!-- 1. PUBLIC MARKETING HERO & SHOWCASE (Minimalistic, Less Text, 2026) -->
+  <!-- 1. PUBLIC MARKETING WEBSITE (Light Mode, Minimalist, Less Text)      -->
   <!-- ==================================================================== -->
   <div id="public-landing-mode" class="block w-full">
-    <!-- Clean Minimalist Header -->
-    <header class="sticky top-0 z-50 bg-surface-navy/80 backdrop-blur-xl border-b border-border-overlay">
+    <!-- Public Header -->
+    <header class="sticky top-0 z-50 bg-white/85 backdrop-blur-xl border-b border-border-light shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
         <a href="#public-hero" class="flex items-center gap-3 group apple-tap">
           <img
             src="assets/dunite-logo.png"
-            class="w-10 h-10 rounded-2xl shadow-lg border border-border-overlay object-contain group-hover:scale-105 apple-motion"
+            class="w-10 h-10 rounded-2xl shadow-md border border-border-light object-contain group-hover:scale-105 apple-motion"
             alt="DUNITE Logo"
             onerror="this.src='https://raw.githubusercontent.com/Neha-hub-maker/DAIN-New/main/assets/dunite-logo.png'"
           />
           <div>
             <div class="flex items-center gap-1.5">
-              <span class="font-display text-lg font-bold tracking-tight text-white">DAIN</span>
-              <span class="text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded-full bg-dunite-red text-white font-mono">PR HUB</span>
+              <span class="font-display text-lg font-bold tracking-tight text-on-surface">DAIN</span>
+              <span class="text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-dunite-red text-white font-mono">PR HUB</span>
             </div>
             <p class="text-[11px] text-on-surface-variant font-mono">Dhaka University</p>
           </div>
         </a>
 
         <!-- Desktop Minimalist Icon Links -->
-        <nav class="hidden md:flex items-center gap-6 text-xs font-mono text-on-surface-variant font-medium">
-          <a href="#section-about" class="hover:text-academic-gold apple-motion flex items-center gap-1.5">
+        <nav class="hidden md:flex items-center gap-7 text-xs font-mono text-on-surface-variant font-medium">
+          <a href="#section-about" class="hover:text-dunite-red apple-motion flex items-center gap-1.5">
             <span class="material-symbols-outlined text-base">info</span>
             <span>Rationale</span>
           </a>
-          <a href="#section-sectors" class="hover:text-academic-gold apple-motion flex items-center gap-1.5">
+          <a href="#section-sectors" class="hover:text-dunite-red apple-motion flex items-center gap-1.5">
             <span class="material-symbols-outlined text-base">grid_view</span>
             <span>5 Sectors</span>
           </a>
-          <a href="#section-lifecycle" class="hover:text-academic-gold apple-motion flex items-center gap-1.5">
+          <a href="#section-lifecycle" class="hover:text-dunite-red apple-motion flex items-center gap-1.5">
             <span class="material-symbols-outlined text-base">linear_scale</span>
             <span>Lifecycle</span>
           </a>
-          <a href="#section-media" class="hover:text-academic-gold apple-motion flex items-center gap-1.5">
+          <a href="#section-media" class="hover:text-dunite-red apple-motion flex items-center gap-1.5">
             <span class="material-symbols-outlined text-base">hub</span>
             <span>100+ Media</span>
           </a>
@@ -348,7 +355,7 @@
         <div class="flex items-center gap-2.5">
           <button
             onclick="openAuthModal('login')"
-            class="px-4 py-2 rounded-xl text-xs font-mono font-medium text-white border border-border-overlay hover:border-academic-gold/40 hover:bg-surface-container apple-motion apple-tap"
+            class="px-4 py-2 rounded-xl text-xs font-mono font-medium text-on-surface border border-border-light hover:border-dunite-red/40 hover:bg-surface-subtle apple-motion apple-tap"
           >
             Log In
           </button>
@@ -363,26 +370,24 @@
       </div>
     </header>
 
-    <!-- Public Hero: High-Impact, Minimalist, Icon-Driven -->
-    <section id="public-hero" class="relative overflow-hidden pt-14 pb-20 border-b border-border-overlay">
-      <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-dunite-red/15 via-academic-gold/10 to-transparent blur-3xl pointer-events-none"></div>
-
+    <!-- Public Hero Section (Crisp Light Mode) -->
+    <section id="public-hero" class="relative overflow-hidden pt-16 pb-20 border-b border-border-light bg-gradient-to-b from-white via-canvas-light to-white">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-6 text-center">
-        <!-- Status Indicator Pill -->
-        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-academic-gold/30 bg-academic-gold/5 text-academic-gold text-xs font-mono">
-          <span class="w-2 h-2 rounded-full bg-academic-gold animate-pulse"></span>
+        <!-- Live Status Pill -->
+        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-dunite-red/20 bg-dunite-red/5 text-dunite-red text-xs font-mono">
+          <span class="w-2 h-2 rounded-full bg-dunite-red animate-pulse"></span>
           <span>DUNITE PR Infrastructure &bull; Dhaka University</span>
         </div>
 
-        <h1 class="font-display text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white max-w-4xl mx-auto leading-[1.08]">
-          Amplify Dhaka University’s Excellence to the <span class="bg-gradient-to-r from-academic-gold via-white to-dunite-red bg-clip-text text-transparent">Nation</span>
+        <h1 class="font-display text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-on-surface max-w-4xl mx-auto leading-[1.08]">
+          Amplify Dhaka University’s Excellence to the <span class="text-dunite-red">Nation</span>
         </h1>
 
         <p class="text-sm sm:text-base text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
           Transform raw academic achievements, startup launches, and community milestones into verified press kits syndicated to 100+ national media partners.
         </p>
 
-        <!-- Primary Actions -->
+        <!-- Action Buttons -->
         <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
           <button
             onclick="enterAppWorkspace('submit')"
@@ -394,41 +399,41 @@
 
           <button
             onclick="enterAppWorkspace('stories')"
-            class="border border-border-overlay hover:border-academic-gold/40 text-white px-6 py-3.5 rounded-2xl text-xs font-semibold bg-surface-container hover:bg-surface-container-high flex items-center gap-2 apple-motion apple-tap"
+            class="border border-border-light hover:border-academic-gold text-on-surface px-6 py-3.5 rounded-2xl text-xs font-semibold bg-white hover:bg-surface-subtle flex items-center gap-2 shadow-apple apple-motion apple-tap"
           >
             <span class="material-symbols-outlined text-lg text-academic-gold">article</span>
             <span>Browse Press Releases</span>
           </button>
         </div>
 
-        <!-- 3 KPI Metric Cards with Apple Styling -->
+        <!-- 3 KPI Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-10 max-w-4xl mx-auto text-left">
-          <div class="p-5 rounded-2xl bg-surface-container border border-border-overlay apple-motion hover:border-academic-gold/30 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-academic-gold/10 text-academic-gold flex items-center justify-center">
+          <div class="p-5 rounded-3xl bg-white border border-border-light shadow-apple apple-motion hover:border-academic-gold/40 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-academic-gold/10 text-academic-gold flex items-center justify-center">
               <span class="material-symbols-outlined text-2xl">hub</span>
             </div>
             <div>
-              <div class="text-2xl font-display font-bold text-white">100+ Outlets</div>
+              <div class="text-2xl font-display font-bold text-on-surface">100+ Outlets</div>
               <p class="text-xs text-on-surface-variant font-mono">National TV &amp; Dailies</p>
             </div>
           </div>
 
-          <div class="p-5 rounded-2xl bg-surface-container border border-border-overlay apple-motion hover:border-academic-gold/30 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-dunite-red/10 text-dunite-red flex items-center justify-center">
+          <div class="p-5 rounded-3xl bg-white border border-border-light shadow-apple apple-motion hover:border-dunite-red/40 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-dunite-red/10 text-dunite-red flex items-center justify-center">
               <span class="material-symbols-outlined text-2xl">verified_user</span>
             </div>
             <div>
-              <div class="text-2xl font-display font-bold text-white">3-Stage</div>
+              <div class="text-2xl font-display font-bold text-on-surface">3-Stage</div>
               <p class="text-xs text-on-surface-variant font-mono">Automated &amp; Editorial</p>
             </div>
           </div>
 
-          <div class="p-5 rounded-2xl bg-surface-container border border-border-overlay apple-motion hover:border-academic-gold/30 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-academic-gold/10 text-academic-gold flex items-center justify-center">
+          <div class="p-5 rounded-3xl bg-white border border-border-light shadow-apple apple-motion hover:border-academic-gold/40 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-academic-gold/10 text-academic-gold flex items-center justify-center">
               <span class="material-symbols-outlined text-2xl">school</span>
             </div>
             <div>
-              <div class="text-2xl font-display font-bold text-white">100% Verified</div>
+              <div class="text-2xl font-display font-bold text-on-surface">100% Verified</div>
               <p class="text-xs text-on-surface-variant font-mono">DU Students &amp; Alumni</p>
             </div>
           </div>
@@ -436,30 +441,30 @@
       </div>
     </section>
 
-    <!-- Strategic Rationale: Minimalist Side-by-Side -->
-    <section id="section-about" class="py-16 border-b border-border-overlay bg-surface-container-lowest">
+    <!-- Strategic Rationale Section -->
+    <section id="section-about" class="py-16 border-b border-border-light bg-surface-subtle">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <div class="text-center space-y-2">
           <span class="text-xs uppercase font-mono text-dunite-red font-bold">Strategic Rationale</span>
-          <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-white">The Visibility Mechanism</h2>
+          <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-on-surface">The Visibility Mechanism</h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="p-6 rounded-3xl bg-surface-navy border border-border-overlay space-y-3 apple-motion">
-            <div class="w-10 h-10 rounded-2xl bg-surface-container text-on-surface-variant flex items-center justify-center">
+          <div class="p-7 rounded-3xl bg-white border border-border-light shadow-apple space-y-3 apple-motion">
+            <div class="w-10 h-10 rounded-2xl bg-surface-subtle text-on-surface-variant flex items-center justify-center">
               <span class="material-symbols-outlined">visibility_off</span>
             </div>
-            <h3 class="font-display text-lg font-bold text-white">The Status Quo</h3>
+            <h3 class="font-display text-lg font-bold text-on-surface">The Status Quo</h3>
             <p class="text-xs text-on-surface-variant leading-relaxed">
               Thousands of accomplishments across research, leadership, and public service remain unrecorded or lost in personal feeds without reaching media newsrooms.
             </p>
           </div>
 
-          <div class="p-6 rounded-3xl bg-surface-navy border border-academic-gold/30 space-y-3 apple-motion">
+          <div class="p-7 rounded-3xl bg-white border border-academic-gold/30 shadow-apple space-y-3 apple-motion">
             <div class="w-10 h-10 rounded-2xl bg-academic-gold/10 text-academic-gold flex items-center justify-center">
               <span class="material-symbols-outlined">campaign</span>
             </div>
-            <h3 class="font-display text-lg font-bold text-white">The DAIN Solution</h3>
+            <h3 class="font-display text-lg font-bold text-on-surface">The DAIN Solution</h3>
             <p class="text-xs text-on-surface-variant leading-relaxed">
               An institutionalized pipeline that structures stories with verified evidence, prepares media-ready kits, and routes them directly to 100+ accredited journalists.
             </p>
@@ -468,57 +473,57 @@
       </div>
     </section>
 
-    <!-- 5 Core Sectors: Clean Icon Grid, Strict Palette -->
-    <section id="section-sectors" class="py-16 border-b border-border-overlay">
+    <!-- 5 Core Sectors (Clean Cards, Strict Palette) -->
+    <section id="section-sectors" class="py-16 border-b border-border-light bg-white">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <div class="text-center space-y-2">
-          <span class="text-xs uppercase font-mono text-academic-gold font-bold">Scope</span>
-          <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-white">5 Dimensions of Institutional Excellence</h2>
+          <span class="text-xs uppercase font-mono text-academic-gold font-bold">Taxonomy</span>
+          <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-on-surface">5 Dimensions of Institutional Excellence</h2>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <!-- Sector 1 -->
-          <div class="p-5 rounded-2xl bg-surface-container border border-border-overlay hover:border-academic-gold/40 apple-motion space-y-2.5">
-            <div class="w-10 h-10 rounded-xl bg-academic-gold/10 text-academic-gold flex items-center justify-center">
+          <!-- 1 -->
+          <div class="p-5 rounded-3xl bg-canvas-light border border-border-light hover:border-academic-gold/50 shadow-apple apple-motion space-y-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-academic-gold/10 text-academic-gold flex items-center justify-center">
               <span class="material-symbols-outlined">school</span>
             </div>
-            <h3 class="font-bold text-sm text-white">Academic</h3>
-            <p class="text-xs text-on-surface-variant font-mono">Scholarships &bull; Publications &bull; Grants</p>
+            <h3 class="font-bold text-sm text-on-surface">Academic</h3>
+            <p class="text-xs text-on-surface-variant font-mono">Scholarships &bull; Research &bull; Fellowships</p>
           </div>
 
-          <!-- Sector 2 -->
-          <div class="p-5 rounded-2xl bg-surface-container border border-border-overlay hover:border-academic-gold/40 apple-motion space-y-2.5">
-            <div class="w-10 h-10 rounded-xl bg-dunite-red/10 text-dunite-red flex items-center justify-center">
+          <!-- 2 -->
+          <div class="p-5 rounded-3xl bg-canvas-light border border-border-light hover:border-dunite-red/50 shadow-apple apple-motion space-y-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-dunite-red/10 text-dunite-red flex items-center justify-center">
               <span class="material-symbols-outlined">work</span>
             </div>
-            <h3 class="font-bold text-sm text-white">Professional</h3>
+            <h3 class="font-bold text-sm text-on-surface">Professional</h3>
             <p class="text-xs text-on-surface-variant font-mono">Promotions &bull; Appointments &bull; Certs</p>
           </div>
 
-          <!-- Sector 3 -->
-          <div class="p-5 rounded-2xl bg-surface-container border border-border-overlay hover:border-academic-gold/40 apple-motion space-y-2.5">
-            <div class="w-10 h-10 rounded-xl bg-academic-gold/10 text-academic-gold flex items-center justify-center">
+          <!-- 3 -->
+          <div class="p-5 rounded-3xl bg-canvas-light border border-border-light hover:border-academic-gold/50 shadow-apple apple-motion space-y-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-academic-gold/10 text-academic-gold flex items-center justify-center">
               <span class="material-symbols-outlined">rocket_launch</span>
             </div>
-            <h3 class="font-bold text-sm text-white">Ventures</h3>
+            <h3 class="font-bold text-sm text-on-surface">Ventures</h3>
             <p class="text-xs text-on-surface-variant font-mono">Startups &bull; Seed Funding &bull; Scale</p>
           </div>
 
-          <!-- Sector 4 -->
-          <div class="p-5 rounded-2xl bg-surface-container border border-border-overlay hover:border-academic-gold/40 apple-motion space-y-2.5">
-            <div class="w-10 h-10 rounded-xl bg-dunite-red/10 text-dunite-red flex items-center justify-center">
+          <!-- 4 -->
+          <div class="p-5 rounded-3xl bg-canvas-light border border-border-light hover:border-dunite-red/50 shadow-apple apple-motion space-y-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-dunite-red/10 text-dunite-red flex items-center justify-center">
               <span class="material-symbols-outlined">volunteer_activism</span>
             </div>
-            <h3 class="font-bold text-sm text-white">Social Impact</h3>
-            <p class="text-xs text-on-surface-variant font-mono">NGO Initiatives &bull; Policy &bull; Volunteer</p>
+            <h3 class="font-bold text-sm text-on-surface">Social Impact</h3>
+            <p class="text-xs text-on-surface-variant font-mono">NGO Projects &bull; Policy &bull; Volunteer</p>
           </div>
 
-          <!-- Sector 5 -->
-          <div class="p-5 rounded-2xl bg-surface-container border border-border-overlay hover:border-academic-gold/40 apple-motion space-y-2.5">
-            <div class="w-10 h-10 rounded-xl bg-academic-gold/10 text-academic-gold flex items-center justify-center">
+          <!-- 5 -->
+          <div class="p-5 rounded-3xl bg-canvas-light border border-border-light hover:border-academic-gold/50 shadow-apple apple-motion space-y-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-academic-gold/10 text-academic-gold flex items-center justify-center">
               <span class="material-symbols-outlined">military_tech</span>
             </div>
-            <h3 class="font-bold text-sm text-white">Personal</h3>
+            <h3 class="font-bold text-sm text-on-surface">Personal</h3>
             <p class="text-xs text-on-surface-variant font-mono">Inspirational &bull; Triumphs &bull; Stories</p>
           </div>
         </div>
@@ -526,46 +531,46 @@
     </section>
 
     <!-- 4-Stage Lifecycle Process -->
-    <section id="section-lifecycle" class="py-16 border-b border-border-overlay bg-surface-container-lowest">
+    <section id="section-lifecycle" class="py-16 border-b border-border-light bg-surface-subtle">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <div class="text-center space-y-2">
-          <span class="text-xs uppercase font-mono text-dunite-red font-bold">Lifecycle</span>
-          <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-white">How It Works</h2>
+          <span class="text-xs uppercase font-mono text-dunite-red font-bold">Workflow</span>
+          <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-on-surface">How It Works</h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="p-5 rounded-2xl bg-surface-navy border border-border-overlay space-y-2.5 apple-motion">
+          <div class="p-6 rounded-3xl bg-white border border-border-light shadow-apple space-y-2.5 apple-motion">
             <span class="text-xs font-mono font-bold text-dunite-red">01 // AUTH</span>
             <div class="flex items-center gap-2">
               <span class="material-symbols-outlined text-academic-gold">badge</span>
-              <h4 class="font-bold text-sm text-white">Authenticate</h4>
+              <h4 class="font-bold text-sm text-on-surface">Authenticate</h4>
             </div>
             <p class="text-xs text-on-surface-variant leading-relaxed">Instant verification via @du.ac.bd institutional email or alumni records.</p>
           </div>
 
-          <div class="p-5 rounded-2xl bg-surface-navy border border-border-overlay space-y-2.5 apple-motion">
+          <div class="p-6 rounded-3xl bg-white border border-border-light shadow-apple space-y-2.5 apple-motion">
             <span class="text-xs font-mono font-bold text-academic-gold">02 // SUBMIT</span>
             <div class="flex items-center gap-2">
               <span class="material-symbols-outlined text-academic-gold">attach_file</span>
-              <h4 class="font-bold text-sm text-white">Submit Proof</h4>
+              <h4 class="font-bold text-sm text-on-surface">Submit Proof</h4>
             </div>
             <p class="text-xs text-on-surface-variant leading-relaxed">Draft headline, executive summary, and attach primary evidence.</p>
           </div>
 
-          <div class="p-5 rounded-2xl bg-surface-navy border border-border-overlay space-y-2.5 apple-motion">
+          <div class="p-6 rounded-3xl bg-white border border-border-light shadow-apple space-y-2.5 apple-motion">
             <span class="text-xs font-mono font-bold text-dunite-red">03 // VALIDATE</span>
             <div class="flex items-center gap-2">
               <span class="material-symbols-outlined text-academic-gold">policy</span>
-              <h4 class="font-bold text-sm text-white">Validate</h4>
+              <h4 class="font-bold text-sm text-on-surface">Validate</h4>
             </div>
             <p class="text-xs text-on-surface-variant leading-relaxed">Automated screening, fact-checking, and editorial polishing.</p>
           </div>
 
-          <div class="p-5 rounded-2xl bg-surface-navy border border-border-overlay space-y-2.5 apple-motion">
+          <div class="p-6 rounded-3xl bg-white border border-border-light shadow-apple space-y-2.5 apple-motion">
             <span class="text-xs font-mono font-bold text-academic-gold">04 // AMPLIFY</span>
             <div class="flex items-center gap-2">
               <span class="material-symbols-outlined text-academic-gold">rss_feed</span>
-              <h4 class="font-bold text-sm text-white">Amplify</h4>
+              <h4 class="font-bold text-sm text-on-surface">Amplify</h4>
             </div>
             <p class="text-xs text-on-surface-variant leading-relaxed">Concentric release across 100+ national, digital, and campus media.</p>
           </div>
@@ -574,35 +579,35 @@
     </section>
 
     <!-- 100+ Media Network Section -->
-    <section id="section-media" class="py-16 border-b border-border-overlay">
+    <section id="section-media" class="py-16 border-b border-border-light bg-white">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 text-center">
         <div class="space-y-2">
           <span class="text-xs uppercase font-mono text-academic-gold font-bold">Network</span>
-          <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-white">4-Tier Concentric Media Routing</h2>
+          <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-on-surface">4-Tier Concentric Media Routing</h2>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
-          <div class="p-5 rounded-2xl bg-surface-container border border-border-overlay space-y-2 apple-motion hover:border-dunite-red/40">
+          <div class="p-6 rounded-3xl bg-canvas-light border border-border-light shadow-apple space-y-2 apple-motion hover:border-dunite-red/40">
             <span class="text-[11px] font-mono font-bold text-dunite-red uppercase">Tier 01</span>
-            <h4 class="font-bold text-sm text-white">National Media &amp; TV</h4>
+            <h4 class="font-bold text-sm text-on-surface">National Media &amp; TV</h4>
             <p class="text-xs text-on-surface-variant">Prothom Alo, Daily Star, Somoy TV, Channel i, BSS Agency.</p>
           </div>
 
-          <div class="p-5 rounded-2xl bg-surface-container border border-border-overlay space-y-2 apple-motion hover:border-academic-gold/40">
+          <div class="p-6 rounded-3xl bg-canvas-light border border-border-light shadow-apple space-y-2 apple-motion hover:border-academic-gold/40">
             <span class="text-[11px] font-mono font-bold text-academic-gold uppercase">Tier 02</span>
-            <h4 class="font-bold text-sm text-white">Digital News &amp; Tech</h4>
+            <h4 class="font-bold text-sm text-on-surface">Digital News &amp; Tech</h4>
             <p class="text-xs text-on-surface-variant">Tech in Asia, Future Startup, Dhaka Tribune, BDNews24.</p>
           </div>
 
-          <div class="p-5 rounded-2xl bg-surface-container border border-border-overlay space-y-2 apple-motion hover:border-academic-gold/40">
-            <span class="text-[11px] font-mono font-bold text-white uppercase">Tier 03</span>
-            <h4 class="font-bold text-sm text-white">Campus &amp; Alumni</h4>
+          <div class="p-6 rounded-3xl bg-canvas-light border border-border-light shadow-apple space-y-2 apple-motion hover:border-border-light">
+            <span class="text-[11px] font-mono font-bold text-on-surface uppercase">Tier 03</span>
+            <h4 class="font-bold text-sm text-on-surface">Campus &amp; Alumni</h4>
             <p class="text-xs text-on-surface-variant">DUNITE Media, DU Journalists' Association, Alumni Chapters.</p>
           </div>
 
-          <div class="p-5 rounded-2xl bg-surface-container border border-border-overlay space-y-2 apple-motion hover:border-academic-gold/40">
+          <div class="p-6 rounded-3xl bg-canvas-light border border-border-light shadow-apple space-y-2 apple-motion hover:border-academic-gold/40">
             <span class="text-[11px] font-mono font-bold text-academic-gold uppercase">Tier 04</span>
-            <h4 class="font-bold text-sm text-white">Byte-Sized Feeds</h4>
+            <h4 class="font-bold text-sm text-on-surface">Byte-Sized Feeds</h4>
             <p class="text-xs text-on-surface-variant">Executive LinkedIn Spotlights, Newsletters, Micro-digests.</p>
           </div>
         </div>
@@ -610,13 +615,13 @@
     </section>
 
     <!-- Public Footer -->
-    <footer class="py-12 bg-surface-container-lowest text-xs text-on-surface-variant border-t border-border-overlay">
+    <footer class="py-12 bg-white text-xs text-on-surface-variant border-t border-border-light">
       <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-2.5">
           <img src="assets/dunite-logo.png" class="w-7 h-7 rounded-lg object-contain" alt="DUNITE Logo" />
           <span class="font-mono">DAIN &bull; DUNITE Achievement &amp; Impact Network &bull; Dhaka University</span>
         </div>
-        <button onclick="enterAppWorkspace('home')" class="text-academic-gold hover:underline font-mono text-xs apple-tap">
+        <button onclick="enterAppWorkspace('home')" class="text-dunite-red font-semibold hover:underline font-mono text-xs apple-tap">
           Launch App Workspace &rarr;
         </button>
       </div>
@@ -624,39 +629,39 @@
   </div>
 
   <!-- ==================================================================== -->
-  <!-- 2. SKELETON LOADER SCREEN (Ultra-fast 200ms Apple transition state)    -->
+  <!-- 2. SKELETON LOADER SCREEN (Apple Shimmer for Light Mode)             -->
   <!-- ==================================================================== -->
-  <div id="skeleton-screen" class="hidden fixed inset-0 z-50 bg-surface-navy/95 backdrop-blur-md p-6 md:p-12 overflow-hidden flex flex-col justify-center">
+  <div id="skeleton-screen" class="hidden fixed inset-0 z-50 bg-canvas-light/95 backdrop-blur-md p-6 md:p-12 overflow-hidden flex flex-col justify-center">
     <div class="max-w-5xl mx-auto w-full space-y-6">
       <div class="flex items-center justify-between">
-        <div class="skeleton w-48 h-8 rounded-xl"></div>
-        <div class="skeleton w-32 h-8 rounded-xl"></div>
+        <div class="skeleton w-48 h-8 rounded-2xl"></div>
+        <div class="skeleton w-32 h-8 rounded-2xl"></div>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="skeleton h-24 rounded-2xl"></div>
-        <div class="skeleton h-24 rounded-2xl"></div>
-        <div class="skeleton h-24 rounded-2xl"></div>
+        <div class="skeleton h-24 rounded-3xl"></div>
+        <div class="skeleton h-24 rounded-3xl"></div>
+        <div class="skeleton h-24 rounded-3xl"></div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="skeleton h-60 rounded-3xl"></div>
-        <div class="skeleton h-60 rounded-3xl"></div>
+        <div class="skeleton h-56 rounded-3xl"></div>
+        <div class="skeleton h-56 rounded-3xl"></div>
       </div>
     </div>
   </div>
 
   <!-- ==================================================================== -->
-  <!-- 3. AUTHENTICATION MODAL (DUNITE Verification)                         -->
+  <!-- 3. AUTHENTICATION MODAL (DUNITE Verification in Light Mode)          -->
   <!-- ==================================================================== -->
-  <dialog id="auth-modal" class="w-[min(92vw,440px)] bg-surface-container-high border border-border-overlay rounded-3xl text-on-surface p-0 shadow-2xl backdrop:bg-black/85 apple-motion">
-    <div class="p-6 border-b border-border-overlay flex justify-between items-center bg-surface-navy">
+  <dialog id="auth-modal" class="w-[min(92vw,440px)] bg-white border border-border-light rounded-3xl text-on-surface p-0 shadow-apple-hover backdrop:bg-slate-900/40 apple-motion">
+    <div class="p-6 border-b border-border-light flex justify-between items-center bg-surface-subtle">
       <div class="flex items-center gap-3">
-        <img src="assets/dunite-logo.png" class="w-9 h-9 rounded-xl" alt="DUNITE Logo" />
+        <img src="assets/dunite-logo.png" class="w-9 h-9 rounded-xl shadow-sm" alt="DUNITE Logo" />
         <div>
-          <h3 id="auth-modal-title" class="font-display text-base font-bold text-white">Sign In to DAIN</h3>
+          <h3 id="auth-modal-title" class="font-display text-base font-bold text-on-surface">Sign In to DAIN</h3>
           <p class="text-[11px] text-on-surface-variant font-mono">DUNITE Verification Portal</p>
         </div>
       </div>
-      <button onclick="document.getElementById('auth-modal').close()" class="p-1 text-on-surface-variant hover:text-white apple-tap">
+      <button onclick="document.getElementById('auth-modal').close()" class="p-1 text-on-surface-variant hover:text-on-surface apple-tap">
         <span class="material-symbols-outlined">close</span>
       </button>
     </div>
@@ -665,7 +670,7 @@
       <form onsubmit="handlePublicAuth(event)" class="space-y-4">
         <div>
           <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="public-auth-name">Full Name</label>
-          <input id="public-auth-name" type="text" required placeholder="e.g. Asif Mahmud" class="w-full bg-surface-navy border border-border-overlay rounded-xl py-2.5 px-3 text-sm text-white focus:border-academic-gold" />
+          <input id="public-auth-name" type="text" required placeholder="e.g. Asif Mahmud" class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2.5 px-3 text-sm text-on-surface focus:border-dunite-red focus:bg-white" />
         </div>
 
         <div>
@@ -678,17 +683,17 @@
             required
             oninput="checkPublicAuthEmail(this.value)"
             placeholder="student_id@du.ac.bd"
-            class="w-full bg-surface-navy border border-border-overlay rounded-xl py-2.5 px-3 text-sm text-white focus:border-academic-gold"
+            class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2.5 px-3 text-sm text-on-surface focus:border-dunite-red focus:bg-white"
           />
-          <div id="public-du-tag" class="hidden mt-2 p-2 rounded-xl bg-academic-gold/10 border border-academic-gold/30 text-academic-gold text-xs font-mono flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-sm">verified</span>
+          <div id="public-du-tag" class="hidden mt-2 p-2 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-mono flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-academic-gold">verified</span>
             <span>Automatic DU Verification Recognized</span>
           </div>
         </div>
 
         <div>
           <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="public-auth-role">Affiliation</label>
-          <select id="public-auth-role" class="w-full bg-surface-navy border border-border-overlay rounded-xl py-2.5 px-3 text-sm text-white focus:border-academic-gold">
+          <select id="public-auth-role" class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2.5 px-3 text-sm text-on-surface focus:border-dunite-red focus:bg-white">
             <option value="Current Student">Current Student</option>
             <option value="DU Alumni">DU Alumni (Graduate)</option>
             <option value="Faculty / Teacher">Faculty Member</option>
@@ -704,32 +709,32 @@
   </dialog>
 
   <!-- ==================================================================== -->
-  <!-- 4. APP WORKSPACE (Dashboard, Submission, Review, Analytics)          -->
+  <!-- 4. APP WORKSPACE (Dashboard, Submission, Review in Light Mode)       -->
   <!-- ==================================================================== -->
   <div id="app-workspace-mode" class="hidden min-h-screen">
     <!-- Sidebar Navigation -->
     <nav
       id="sidebar"
       aria-label="Main navigation"
-      class="bg-surface-navy fixed left-0 top-0 h-screen w-[270px] bg-gradient-to-b from-surface-navy to-surface-container-lowest border-r border-border-overlay flex flex-col py-4 px-3 z-50 overflow-y-auto"
+      class="bg-white fixed left-0 top-0 h-screen w-[270px] border-r border-border-light flex flex-col py-4 px-3 z-50 overflow-y-auto shadow-sm"
     >
       <!-- Brand Header -->
-      <div class="flex items-center gap-3 mb-6 p-2 rounded-2xl bg-surface-container-lowest border border-border-overlay">
+      <div class="flex items-center gap-3 mb-6 p-2.5 rounded-2xl bg-surface-subtle border border-border-light">
         <img
           alt="DUNITE Logo"
-          class="w-9 h-9 rounded-xl shadow-md object-contain border border-border-overlay cursor-pointer apple-tap"
+          class="w-9 h-9 rounded-xl shadow-sm object-contain border border-border-light cursor-pointer apple-tap"
           src="assets/dunite-logo.png"
           onclick="returnToPublicLanding()"
           title="Back to Public Homepage"
         />
         <div class="min-w-0">
           <div class="flex items-center gap-1.5">
-            <h1 class="font-display text-base font-bold tracking-tight text-white">DAIN</h1>
+            <h1 class="font-display text-base font-bold tracking-tight text-on-surface">DAIN</h1>
             <span class="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-dunite-red text-white font-mono">PORTAL</span>
           </div>
           <p class="text-[11px] text-on-surface-variant truncate">Dhaka University</p>
         </div>
-        <button id="close-sidebar" class="ml-auto lg:hidden p-1 text-on-surface-variant hover:text-academic-gold" aria-label="Close navigation">
+        <button id="close-sidebar" class="ml-auto lg:hidden p-1 text-on-surface-variant hover:text-dunite-red" aria-label="Close navigation">
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
@@ -762,7 +767,7 @@
           </button>
 
           <button class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-on-surface-variant apple-tap" data-view="professional">
-            <span class="material-symbols-outlined text-lg text-academic-gold">work</span>
+            <span class="material-symbols-outlined text-lg text-dunite-red">work</span>
             <span>Professional</span>
           </button>
 
@@ -772,7 +777,7 @@
           </button>
 
           <button class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-on-surface-variant apple-tap" data-view="social-impact">
-            <span class="material-symbols-outlined text-lg text-academic-gold">volunteer_activism</span>
+            <span class="material-symbols-outlined text-lg text-dunite-red">volunteer_activism</span>
             <span>Social Impact</span>
           </button>
 
@@ -796,30 +801,30 @@
           </button>
 
           <button class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-on-surface-variant apple-tap" data-view="analytics">
-            <span class="material-symbols-outlined text-lg">insights</span>
+            <span class="material-symbols-outlined text-lg text-on-surface">insights</span>
             <span>Reach Analytics</span>
           </button>
         </div>
       </div>
 
       <!-- Sidebar Footer -->
-      <div class="mt-auto pt-4 border-t border-border-overlay space-y-2">
-        <div id="sidebar-auth-card" class="p-2.5 rounded-2xl bg-surface-container-high border border-border-overlay flex items-center justify-between">
+      <div class="mt-auto pt-4 border-t border-border-light space-y-2">
+        <div id="sidebar-auth-card" class="p-2.5 rounded-2xl bg-surface-subtle border border-border-light flex items-center justify-between">
           <div class="flex items-center gap-2 min-w-0">
-            <div class="w-7 h-7 rounded-full bg-academic-gold/10 text-academic-gold flex items-center justify-center font-bold text-xs">DU</div>
+            <div class="w-7 h-7 rounded-full bg-dunite-red/10 text-dunite-red flex items-center justify-center font-bold text-xs">DU</div>
             <div class="min-w-0">
-              <p class="text-xs font-semibold text-white truncate" id="sidebar-user-name">DU Contributor</p>
-              <p class="text-[10px] text-academic-gold font-mono flex items-center gap-1">
+              <p class="text-xs font-semibold text-on-surface truncate" id="sidebar-user-name">DU Contributor</p>
+              <p class="text-[10px] text-academic-gold font-mono flex items-center gap-1 font-semibold">
                 <span class="w-1.5 h-1.5 rounded-full bg-academic-gold"></span>Verified
               </p>
             </div>
           </div>
-          <button onclick="returnToPublicLanding()" class="p-1 rounded-lg text-on-surface-variant hover:text-white apple-tap" title="Sign Out">
+          <button onclick="returnToPublicLanding()" class="p-1 rounded-lg text-on-surface-variant hover:text-dunite-red apple-tap" title="Sign Out">
             <span class="material-symbols-outlined text-base">logout</span>
           </button>
         </div>
 
-        <button onclick="returnToPublicLanding()" class="w-full text-center text-xs font-mono text-academic-gold hover:underline py-1 apple-tap">
+        <button onclick="returnToPublicLanding()" class="w-full text-center text-xs font-mono text-dunite-red hover:underline py-1 apple-tap font-semibold">
           &larr; Public Homepage
         </button>
       </div>
@@ -828,16 +833,16 @@
     <!-- Topbar Header -->
     <header
       id="topbar"
-      class="bg-surface-container/90 backdrop-blur-md fixed top-0 right-0 w-[calc(100%-270px)] border-b border-border-overlay flex justify-between items-center h-16 px-4 md:px-8 z-30 apple-motion"
+      class="bg-white/85 backdrop-blur-md fixed top-0 right-0 w-[calc(100%-270px)] border-b border-border-light flex justify-between items-center h-16 px-4 md:px-8 z-30 apple-motion shadow-sm"
     >
       <div class="flex items-center gap-3 min-w-0">
-        <button id="open-sidebar" class="lg:hidden p-2 text-on-surface-variant hover:text-academic-gold apple-tap" aria-label="Open navigation">
+        <button id="open-sidebar" class="lg:hidden p-2 text-on-surface-variant hover:text-dunite-red apple-tap" aria-label="Open navigation">
           <span class="material-symbols-outlined">menu</span>
         </button>
 
         <div class="flex items-center gap-2">
-          <span class="text-xs font-mono text-academic-gold uppercase tracking-wider hidden sm:inline" id="topbar-crumb">DAIN //</span>
-          <h2 id="view-title" class="font-display text-sm md:text-base font-bold tracking-tight text-white truncate">
+          <span class="text-xs font-mono text-dunite-red uppercase tracking-wider hidden sm:inline font-bold" id="topbar-crumb">DAIN //</span>
+          <h2 id="view-title" class="font-display text-sm md:text-base font-bold tracking-tight text-on-surface truncate">
             Studio
           </h2>
         </div>
@@ -850,7 +855,7 @@
             id="global-search"
             type="search"
             placeholder="Search stories, alumni..."
-            class="w-full bg-surface-navy border border-border-overlay rounded-xl py-1.5 pl-9 pr-3 text-xs text-on-surface focus:border-academic-gold apple-motion"
+            class="w-full bg-surface-subtle border border-border-light rounded-xl py-1.5 pl-9 pr-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white apple-motion"
           />
         </div>
 
@@ -864,7 +869,7 @@
 
         <button
           onclick="returnToPublicLanding()"
-          class="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-border-overlay bg-surface-navy text-xs font-mono text-on-surface-variant hover:text-white apple-motion apple-tap"
+          class="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-border-light bg-surface-subtle text-xs font-mono text-on-surface hover:text-dunite-red apple-motion apple-tap"
         >
           <span class="material-symbols-outlined text-sm">home</span>
           <span class="hidden md:inline">Public</span>
@@ -872,19 +877,19 @@
       </div>
     </header>
 
-    <!-- Main Content Workspace (All App Views) -->
+    <!-- Main Content Workspace (All Views in Light Mode) -->
     <main
       id="main-content"
-      class="ml-[270px] mt-16 p-4 md:p-8 w-[calc(100%-270px)] min-h-[calc(100vh-64px)] bg-surface-navy apple-motion"
+      class="ml-[270px] mt-16 p-4 md:p-8 w-[calc(100%-270px)] min-h-[calc(100vh-64px)] bg-canvas-light apple-motion"
     >
       <div class="max-w-6xl mx-auto space-y-6">
 
         <!-- View 1: Studio Discovery -->
         <section id="view-home" class="view-panel active space-y-6">
-          <div class="p-6 rounded-3xl border border-border-overlay bg-surface-container-lowest flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="p-6 rounded-3xl border border-border-light bg-white shadow-apple flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="space-y-1.5">
               <span class="text-xs font-mono text-academic-gold uppercase font-bold">DAIN Workspace</span>
-              <h2 class="font-display text-xl font-bold text-white">Live PR &amp; Syndication Stream</h2>
+              <h2 class="font-display text-xl font-bold text-on-surface">Live PR &amp; Syndication Stream</h2>
               <p class="text-xs text-on-surface-variant">Manage submissions and monitor 3-stage editorial validation.</p>
             </div>
             <button onclick="switchView('submit')" class="bg-dunite-red hover:bg-red-700 text-white px-5 py-2.5 rounded-2xl text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 apple-tap shadow-apple">
@@ -894,9 +899,9 @@
           </div>
 
           <div class="space-y-3">
-            <div class="flex items-center justify-between border-b border-border-overlay pb-2">
-              <h3 class="font-bold text-sm text-white">Verified Releases</h3>
-              <button onclick="switchView('stories')" class="text-xs text-academic-gold hover:underline font-mono apple-tap">View All &rarr;</button>
+            <div class="flex items-center justify-between border-b border-border-light pb-2">
+              <h3 class="font-bold text-sm text-on-surface">Verified Releases</h3>
+              <button onclick="switchView('stories')" class="text-xs text-dunite-red hover:underline font-mono apple-tap font-semibold">View All &rarr;</button>
             </div>
             <div id="home-featured-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
           </div>
@@ -905,32 +910,32 @@
         <!-- View 2: Submission Studio (3-Step Wizard) -->
         <section id="view-submit" class="view-panel space-y-6">
           <!-- Wizard Stepper Indicators -->
-          <div class="bg-surface-container-lowest border border-border-overlay rounded-3xl p-5 flex justify-between items-center max-w-xl mx-auto">
+          <div class="bg-white border border-border-light rounded-3xl p-5 flex justify-between items-center max-w-xl mx-auto shadow-apple">
             <div class="flex items-center gap-2">
-              <div class="form-dot active w-7 h-7 rounded-full border border-border-overlay flex items-center justify-center text-xs font-mono font-bold" data-form-dot="1">1</div>
-              <span class="text-xs uppercase font-mono font-semibold text-white">Narrative</span>
+              <div class="form-dot active w-7 h-7 rounded-full border border-border-light flex items-center justify-center text-xs font-mono font-bold" data-form-dot="1">1</div>
+              <span class="text-xs uppercase font-mono font-semibold text-on-surface">Narrative</span>
             </div>
             <span class="text-on-surface-variant">&rarr;</span>
             <div class="flex items-center gap-2">
-              <div class="form-dot w-7 h-7 rounded-full border border-border-overlay flex items-center justify-center text-xs font-mono font-bold" data-form-dot="2">2</div>
+              <div class="form-dot w-7 h-7 rounded-full border border-border-light flex items-center justify-center text-xs font-mono font-bold" data-form-dot="2">2</div>
               <span class="text-xs uppercase font-mono text-on-surface-variant">Proof</span>
             </div>
             <span class="text-on-surface-variant">&rarr;</span>
             <div class="flex items-center gap-2">
-              <div class="form-dot w-7 h-7 rounded-full border border-border-overlay flex items-center justify-center text-xs font-mono font-bold" data-form-dot="3">3</div>
+              <div class="form-dot w-7 h-7 rounded-full border border-border-light flex items-center justify-center text-xs font-mono font-bold" data-form-dot="3">3</div>
               <span class="text-xs uppercase font-mono text-on-surface-variant">Review</span>
             </div>
           </div>
 
           <!-- Form Card -->
-          <div class="bg-surface-container border border-border-overlay rounded-3xl p-6 md:p-8 shadow-apple relative">
+          <div class="bg-white border border-border-light rounded-3xl p-6 md:p-8 shadow-apple relative">
             <form id="story-form" class="space-y-4" novalidate>
               <!-- Step 1: Narrative -->
               <div class="form-step active space-y-4" data-form-step="1">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="category">Sector *</label>
-                    <select id="category" name="category" required class="w-full bg-surface-navy border border-border-overlay rounded-xl py-2 px-3 text-xs text-white focus:border-academic-gold">
+                    <select id="category" name="category" required class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2 px-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white">
                       <option value="">Select a sector</option>
                       <option value="Academic">Academic &amp; Research</option>
                       <option value="Professional">Professional</option>
@@ -941,18 +946,18 @@
                   </div>
                   <div>
                     <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="sub-type">Classification *</label>
-                    <input id="sub-type" name="subType" required type="text" placeholder="e.g. Journal Publication, Seed Funding" class="w-full bg-surface-navy border border-border-overlay rounded-xl py-2 px-3 text-xs text-white focus:border-academic-gold" />
+                    <input id="sub-type" name="subType" required type="text" placeholder="e.g. Journal Publication, Seed Funding" class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2 px-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white" />
                   </div>
                 </div>
 
                 <div>
                   <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="headline">Media Headline *</label>
-                  <input id="headline" name="headline" required minlength="10" maxlength="120" type="text" placeholder="Impactful release headline..." class="w-full bg-surface-navy border border-border-overlay rounded-xl py-2 px-3 text-xs text-white focus:border-academic-gold" />
+                  <input id="headline" name="headline" required minlength="10" maxlength="120" type="text" placeholder="Impactful release headline..." class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2 px-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white" />
                 </div>
 
                 <div>
                   <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="summary">Executive Summary *</label>
-                  <textarea id="summary" name="summary" required minlength="30" maxlength="600" rows="3" placeholder="2-3 sentences for journalists..." class="w-full bg-surface-navy border border-border-overlay rounded-xl py-2 px-3 text-xs text-white focus:border-academic-gold resize-none"></textarea>
+                  <textarea id="summary" name="summary" required minlength="30" maxlength="600" rows="3" placeholder="2-3 sentences for journalists..." class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2 px-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white resize-none"></textarea>
                 </div>
               </div>
 
@@ -961,47 +966,47 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="achievement-date">Date *</label>
-                    <input id="achievement-date" name="achievementDate" required type="date" class="w-full bg-surface-navy border border-border-overlay rounded-xl py-2 px-3 text-xs text-white focus:border-academic-gold" />
+                    <input id="achievement-date" name="achievementDate" required type="date" class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2 px-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white" />
                   </div>
                   <div>
                     <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="institution">Department / Hall / Venture *</label>
-                    <input id="institution" name="institution" required type="text" placeholder="e.g. Department of CSE, Faculty of Science" class="w-full bg-surface-navy border border-border-overlay rounded-xl py-2 px-3 text-xs text-white focus:border-academic-gold" />
+                    <input id="institution" name="institution" required type="text" placeholder="e.g. Department of CSE, Faculty of Science" class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2 px-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white" />
                   </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="impact">Primary Metric</label>
-                    <input id="impact" name="impact" type="text" placeholder="e.g. $50,000 Raised, 3.98 CGPA" class="w-full bg-surface-navy border border-border-overlay rounded-xl py-2 px-3 text-xs text-white focus:border-academic-gold" />
+                    <input id="impact" name="impact" type="text" placeholder="e.g. $50,000 Raised, 3.98 CGPA" class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2 px-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white" />
                   </div>
                   <div>
                     <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="evidence-link">Evidence Link / DOI</label>
-                    <input id="evidence-link" name="evidenceLink" type="url" placeholder="https://journal.org/paper or https://news.com" class="w-full bg-surface-navy border border-border-overlay rounded-xl py-2 px-3 text-xs text-white focus:border-academic-gold" />
+                    <input id="evidence-link" name="evidenceLink" type="url" placeholder="https://journal.org/paper or https://news.com" class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2 px-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white" />
                   </div>
                 </div>
 
                 <div>
                   <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="author-email">DU Institutional Email (@du.ac.bd) *</label>
-                  <input id="author-email" name="authorEmail" required type="email" placeholder="student_id@du.ac.bd" class="w-full bg-surface-navy border border-border-overlay rounded-xl py-2 px-3 text-xs text-white focus:border-academic-gold" />
+                  <input id="author-email" name="authorEmail" required type="email" placeholder="student_id@du.ac.bd" class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2 px-3 text-xs text-on-surface focus:border-dunite-red focus:bg-white" />
                 </div>
               </div>
 
               <!-- Step 3: Review -->
               <div class="form-step space-y-4" data-form-step="3">
-                <div class="bg-surface-navy border border-border-overlay rounded-2xl p-5 space-y-2">
-                  <span id="review-category-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-academic-gold/10 text-academic-gold border border-academic-gold/30">ACADEMIC</span>
-                  <h3 id="review-headline" class="text-sm font-bold text-white">Headline</h3>
+                <div class="bg-surface-subtle border border-border-light rounded-2xl p-5 space-y-2">
+                  <span id="review-category-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-academic-gold/10 text-academic-gold border border-academic-gold/30">ACADEMIC</span>
+                  <h3 id="review-headline" class="text-sm font-bold text-on-surface">Headline</h3>
                   <p id="review-meta" class="text-[11px] text-on-surface-variant font-mono"></p>
-                  <p id="review-summary" class="text-xs text-on-surface-variant leading-relaxed p-3 bg-surface-container-lowest rounded-xl"></p>
+                  <p id="review-summary" class="text-xs text-on-surface-variant leading-relaxed p-3 bg-white rounded-xl border border-border-light"></p>
                 </div>
                 <label class="flex gap-2 items-start text-xs text-on-surface-variant">
-                  <input id="confirm-box" type="checkbox" required class="mt-0.5 rounded border-border-overlay bg-surface-navy text-dunite-red" />
+                  <input id="confirm-box" type="checkbox" required class="mt-0.5 rounded border-border-light text-dunite-red focus:ring-dunite-red" />
                   <span>I certify that this story is authentic and authorize syndication to 100+ partner newsrooms.</span>
                 </label>
               </div>
 
-              <div class="flex items-center justify-between pt-3 border-t border-border-overlay">
-                <button id="btn-wizard-back" type="button" class="hidden px-4 py-2 rounded-xl border border-border-overlay text-xs text-on-surface hover:bg-surface-container-highest apple-tap">Back</button>
+              <div class="flex items-center justify-between pt-3 border-t border-border-light">
+                <button id="btn-wizard-back" type="button" class="hidden px-4 py-2 rounded-xl border border-border-light text-xs text-on-surface hover:bg-surface-subtle apple-tap">Back</button>
                 <button id="btn-wizard-next" type="button" class="ml-auto px-5 py-2.5 bg-dunite-red hover:bg-red-700 text-white rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 shadow-apple apple-tap">
                   <span id="wizard-next-label">Continue to Proof</span>
                   <span class="material-symbols-outlined text-base">arrow_forward</span>
@@ -1011,57 +1016,57 @@
           </div>
 
           <!-- 3-Stage Live Simulation Engine -->
-          <div id="validation-section" class="bg-surface-container-lowest border border-border-overlay rounded-3xl p-6 space-y-4">
+          <div id="validation-section" class="bg-white border border-border-light rounded-3xl p-6 space-y-4 shadow-apple">
             <div class="flex items-center justify-between">
               <div>
                 <span class="text-xs font-mono text-dunite-red uppercase font-bold">Verification Engine</span>
-                <h3 class="font-display text-base font-bold text-white">3-Stage Editorial Pipeline</h3>
+                <h3 class="font-display text-base font-bold text-on-surface">3-Stage Editorial Pipeline</h3>
               </div>
-              <button id="run-simulation-btn" type="button" class="px-3.5 py-1.5 border border-academic-gold/40 text-academic-gold hover:bg-academic-gold/10 rounded-xl text-xs font-mono font-semibold flex items-center gap-1.5 apple-tap">
+              <button id="run-simulation-btn" type="button" class="px-3.5 py-1.5 border border-academic-gold text-academic-gold hover:bg-amber-50 rounded-xl text-xs font-mono font-semibold flex items-center gap-1.5 apple-tap">
                 <span class="material-symbols-outlined text-sm">play_arrow</span>
                 <span>Demo Run</span>
               </button>
             </div>
 
             <div class="validation-track">
-              <div id="validation-stage-0" class="validation-stage rounded-2xl p-4 flex flex-col justify-between">
+              <div id="validation-stage-0" class="validation-stage rounded-2xl p-4 flex flex-col justify-between shadow-sm">
                 <div>
                   <div class="stage-node rounded-full flex items-center justify-center mb-2"><span class="material-symbols-outlined text-base">fact_check</span></div>
                   <span class="text-[10px] font-mono text-dunite-red uppercase font-bold">STAGE 01</span>
-                  <h4 class="font-bold text-xs text-white">Automated Check</h4>
+                  <h4 class="font-bold text-xs text-on-surface">Automated Check</h4>
                 </div>
-                <div class="flex justify-between items-center border-t border-border-overlay pt-2 text-xs">
+                <div class="flex justify-between items-center border-t border-border-light pt-2 text-xs">
                   <span class="stage-status text-on-surface-variant font-mono text-[10px]">Waiting</span>
                   <span class="stage-result material-symbols-outlined text-on-surface-variant text-sm">schedule</span>
                 </div>
               </div>
               <div id="validation-connector-0" class="validation-connector"></div>
-              <div id="validation-stage-1" class="validation-stage rounded-2xl p-4 flex flex-col justify-between">
+              <div id="validation-stage-1" class="validation-stage rounded-2xl p-4 flex flex-col justify-between shadow-sm">
                 <div>
                   <div class="stage-node rounded-full flex items-center justify-center mb-2"><span class="material-symbols-outlined text-base">rate_review</span></div>
                   <span class="text-[10px] font-mono text-dunite-red uppercase font-bold">STAGE 02</span>
-                  <h4 class="font-bold text-xs text-white">Editorial Review</h4>
+                  <h4 class="font-bold text-xs text-on-surface">Editorial Review</h4>
                 </div>
-                <div class="flex justify-between items-center border-t border-border-overlay pt-2 text-xs">
+                <div class="flex justify-between items-center border-t border-border-light pt-2 text-xs">
                   <span class="stage-status text-on-surface-variant font-mono text-[10px]">Waiting</span>
                   <span class="stage-result material-symbols-outlined text-on-surface-variant text-sm">schedule</span>
                 </div>
               </div>
               <div id="validation-connector-1" class="validation-connector"></div>
-              <div id="validation-stage-2" class="validation-stage rounded-2xl p-4 flex flex-col justify-between">
+              <div id="validation-stage-2" class="validation-stage rounded-2xl p-4 flex flex-col justify-between shadow-sm">
                 <div>
                   <div class="stage-node rounded-full flex items-center justify-center mb-2"><span class="material-symbols-outlined text-base">campaign</span></div>
                   <span class="text-[10px] font-mono text-dunite-red uppercase font-bold">STAGE 03</span>
-                  <h4 class="font-bold text-xs text-white">Media Routing</h4>
+                  <h4 class="font-bold text-xs text-on-surface">Media Routing</h4>
                 </div>
-                <div class="flex justify-between items-center border-t border-border-overlay pt-2 text-xs">
+                <div class="flex justify-between items-center border-t border-border-light pt-2 text-xs">
                   <span class="stage-status text-on-surface-variant font-mono text-[10px]">Waiting</span>
                   <span class="stage-result material-symbols-outlined text-on-surface-variant text-sm">schedule</span>
                 </div>
               </div>
             </div>
 
-            <div id="pipeline-log" class="bg-surface-navy border border-border-overlay rounded-xl p-2.5 font-mono text-[11px] text-on-surface-variant">
+            <div id="pipeline-log" class="bg-surface-subtle border border-border-light rounded-2xl p-2.5 font-mono text-[11px] text-on-surface-variant">
               SYSTEM // Pipeline standing by for story submission...
             </div>
           </div>
@@ -1069,12 +1074,12 @@
 
         <!-- View 3: Stories Directory -->
         <section id="view-stories" class="view-panel space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-overlay pb-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-light pb-3">
             <div>
               <span class="text-xs uppercase font-mono text-dunite-red font-semibold">Archive</span>
-              <h2 class="font-display text-xl font-bold text-white">Verified Releases</h2>
+              <h2 class="font-display text-xl font-bold text-on-surface">Verified Releases</h2>
             </div>
-            <button onclick="switchView('submit')" class="bg-dunite-red hover:bg-red-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center gap-1 self-start apple-tap">
+            <button onclick="switchView('submit')" class="bg-dunite-red hover:bg-red-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center gap-1 self-start apple-tap shadow-apple">
               <span class="material-symbols-outlined text-sm">add</span>
               <span>New Story</span>
             </button>
@@ -1082,12 +1087,12 @@
 
           <!-- Sector Filter Pills -->
           <div class="flex flex-wrap items-center gap-1.5">
-            <button class="filter-pill active px-3 py-1 rounded-full text-xs font-mono font-medium border border-academic-gold bg-academic-gold/10 text-academic-gold apple-tap" data-sector="All">All</button>
-            <button class="filter-pill px-3 py-1 rounded-full text-xs font-mono font-medium border border-border-overlay bg-surface-container text-on-surface-variant hover:text-white apple-tap" data-sector="Academic">Academic</button>
-            <button class="filter-pill px-3 py-1 rounded-full text-xs font-mono font-medium border border-border-overlay bg-surface-container text-on-surface-variant hover:text-white apple-tap" data-sector="Professional">Professional</button>
-            <button class="filter-pill px-3 py-1 rounded-full text-xs font-mono font-medium border border-border-overlay bg-surface-container text-on-surface-variant hover:text-white apple-tap" data-sector="Entrepreneurial">Ventures</button>
-            <button class="filter-pill px-3 py-1 rounded-full text-xs font-mono font-medium border border-border-overlay bg-surface-container text-on-surface-variant hover:text-white apple-tap" data-sector="Social Impact">Social Impact</button>
-            <button class="filter-pill px-3 py-1 rounded-full text-xs font-mono font-medium border border-border-overlay bg-surface-container text-on-surface-variant hover:text-white apple-tap" data-sector="Personal">Personal</button>
+            <button class="filter-pill active px-3 py-1 rounded-full text-xs font-mono font-medium border border-dunite-red bg-dunite-red/10 text-dunite-red apple-tap" data-sector="All">All</button>
+            <button class="filter-pill px-3 py-1 rounded-full text-xs font-mono font-medium border border-border-light bg-white text-on-surface-variant hover:text-on-surface apple-tap shadow-sm" data-sector="Academic">Academic</button>
+            <button class="filter-pill px-3 py-1 rounded-full text-xs font-mono font-medium border border-border-light bg-white text-on-surface-variant hover:text-on-surface apple-tap shadow-sm" data-sector="Professional">Professional</button>
+            <button class="filter-pill px-3 py-1 rounded-full text-xs font-mono font-medium border border-border-light bg-white text-on-surface-variant hover:text-on-surface apple-tap shadow-sm" data-sector="Entrepreneurial">Ventures</button>
+            <button class="filter-pill px-3 py-1 rounded-full text-xs font-mono font-medium border border-border-light bg-white text-on-surface-variant hover:text-on-surface apple-tap shadow-sm" data-sector="Social Impact">Social Impact</button>
+            <button class="filter-pill px-3 py-1 rounded-full text-xs font-mono font-medium border border-border-light bg-white text-on-surface-variant hover:text-on-surface apple-tap shadow-sm" data-sector="Personal">Personal</button>
           </div>
 
           <!-- Stories Grid -->
@@ -1096,10 +1101,10 @@
 
         <!-- View 4: Sector Views -->
         <section id="view-academic" class="view-panel space-y-4">
-          <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay flex items-center justify-between">
+          <div class="p-5 rounded-3xl bg-white border border-border-light flex items-center justify-between shadow-apple">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-2xl bg-academic-gold/10 text-academic-gold flex items-center justify-center"><span class="material-symbols-outlined">school</span></div>
-              <div><span class="text-xs font-mono text-academic-gold font-bold">SECTOR 01</span><h2 class="font-display text-lg font-bold text-white">Academic &amp; Research</h2></div>
+              <div><span class="text-xs font-mono text-academic-gold font-bold">SECTOR 01</span><h2 class="font-display text-lg font-bold text-on-surface">Academic &amp; Research</h2></div>
             </div>
             <button onclick="openSubmitWithSector('Academic')" class="bg-dunite-red text-white font-bold px-3.5 py-1.5 rounded-xl text-xs uppercase apple-tap">Submit</button>
           </div>
@@ -1107,10 +1112,10 @@
         </section>
 
         <section id="view-professional" class="view-panel space-y-4">
-          <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay flex items-center justify-between">
+          <div class="p-5 rounded-3xl bg-white border border-border-light flex items-center justify-between shadow-apple">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-2xl bg-academic-gold/10 text-academic-gold flex items-center justify-center"><span class="material-symbols-outlined">work</span></div>
-              <div><span class="text-xs font-mono text-academic-gold font-bold">SECTOR 02</span><h2 class="font-display text-lg font-bold text-white">Professional Placements</h2></div>
+              <div class="w-10 h-10 rounded-2xl bg-dunite-red/10 text-dunite-red flex items-center justify-center"><span class="material-symbols-outlined">work</span></div>
+              <div><span class="text-xs font-mono text-dunite-red font-bold">SECTOR 02</span><h2 class="font-display text-lg font-bold text-on-surface">Professional Placements</h2></div>
             </div>
             <button onclick="openSubmitWithSector('Professional')" class="bg-dunite-red text-white font-bold px-3.5 py-1.5 rounded-xl text-xs uppercase apple-tap">Submit</button>
           </div>
@@ -1118,10 +1123,10 @@
         </section>
 
         <section id="view-entrepreneurial" class="view-panel space-y-4">
-          <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay flex items-center justify-between">
+          <div class="p-5 rounded-3xl bg-white border border-border-light flex items-center justify-between shadow-apple">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-2xl bg-academic-gold/10 text-academic-gold flex items-center justify-center"><span class="material-symbols-outlined">rocket_launch</span></div>
-              <div><span class="text-xs font-mono text-academic-gold font-bold">SECTOR 03</span><h2 class="font-display text-lg font-bold text-white">Ventures &amp; Startups</h2></div>
+              <div><span class="text-xs font-mono text-academic-gold font-bold">SECTOR 03</span><h2 class="font-display text-lg font-bold text-on-surface">Ventures &amp; Startups</h2></div>
             </div>
             <button onclick="openSubmitWithSector('Entrepreneurial')" class="bg-dunite-red text-white font-bold px-3.5 py-1.5 rounded-xl text-xs uppercase apple-tap">Submit</button>
           </div>
@@ -1129,10 +1134,10 @@
         </section>
 
         <section id="view-social-impact" class="view-panel space-y-4">
-          <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay flex items-center justify-between">
+          <div class="p-5 rounded-3xl bg-white border border-border-light flex items-center justify-between shadow-apple">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-2xl bg-academic-gold/10 text-academic-gold flex items-center justify-center"><span class="material-symbols-outlined">volunteer_activism</span></div>
-              <div><span class="text-xs font-mono text-academic-gold font-bold">SECTOR 04</span><h2 class="font-display text-lg font-bold text-white">Social Impact</h2></div>
+              <div class="w-10 h-10 rounded-2xl bg-dunite-red/10 text-dunite-red flex items-center justify-center"><span class="material-symbols-outlined">volunteer_activism</span></div>
+              <div><span class="text-xs font-mono text-dunite-red font-bold">SECTOR 04</span><h2 class="font-display text-lg font-bold text-on-surface">Social Impact</h2></div>
             </div>
             <button onclick="openSubmitWithSector('Social Impact')" class="bg-dunite-red text-white font-bold px-3.5 py-1.5 rounded-xl text-xs uppercase apple-tap">Submit</button>
           </div>
@@ -1140,10 +1145,10 @@
         </section>
 
         <section id="view-personal" class="view-panel space-y-4">
-          <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay flex items-center justify-between">
+          <div class="p-5 rounded-3xl bg-white border border-border-light flex items-center justify-between shadow-apple">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-2xl bg-academic-gold/10 text-academic-gold flex items-center justify-center"><span class="material-symbols-outlined">military_tech</span></div>
-              <div><span class="text-xs font-mono text-academic-gold font-bold">SECTOR 05</span><h2 class="font-display text-lg font-bold text-white">Personal Milestones</h2></div>
+              <div><span class="text-xs font-mono text-academic-gold font-bold">SECTOR 05</span><h2 class="font-display text-lg font-bold text-on-surface">Personal Milestones</h2></div>
             </div>
             <button onclick="openSubmitWithSector('Personal')" class="bg-dunite-red text-white font-bold px-3.5 py-1.5 rounded-xl text-xs uppercase apple-tap">Submit</button>
           </div>
@@ -1152,29 +1157,29 @@
 
         <!-- View 5: 100+ Media Network -->
         <section id="view-distribution" class="view-panel space-y-4">
-          <div class="border-b border-border-overlay pb-3">
+          <div class="border-b border-border-light pb-3">
             <span class="text-xs uppercase font-mono text-academic-gold font-semibold">Syndication</span>
-            <h2 class="font-display text-xl font-bold text-white">100+ Media Distribution Network</h2>
+            <h2 class="font-display text-xl font-bold text-on-surface">100+ Media Distribution Network</h2>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay space-y-2 apple-motion">
+            <div class="p-5 rounded-3xl bg-white border border-border-light shadow-apple space-y-2 apple-motion">
               <span class="text-[10px] font-mono font-bold text-dunite-red uppercase">Tier 01</span>
-              <h3 class="font-bold text-sm text-white">National Media &amp; TV</h3>
+              <h3 class="font-bold text-sm text-on-surface">National Media &amp; TV</h3>
               <p class="text-xs text-on-surface-variant">Prothom Alo, Daily Star, Somoy TV, Channel i, BSS.</p>
             </div>
-            <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay space-y-2 apple-motion">
+            <div class="p-5 rounded-3xl bg-white border border-border-light shadow-apple space-y-2 apple-motion">
               <span class="text-[10px] font-mono font-bold text-academic-gold uppercase">Tier 02</span>
-              <h3 class="font-bold text-sm text-white">Digital Tech &amp; News</h3>
+              <h3 class="font-bold text-sm text-on-surface">Digital Tech &amp; News</h3>
               <p class="text-xs text-on-surface-variant">Tech in Asia, Future Startup, Dhaka Tribune.</p>
             </div>
-            <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay space-y-2 apple-motion">
-              <span class="text-[10px] font-mono font-bold text-white uppercase">Tier 03</span>
-              <h3 class="font-bold text-sm text-white">Campus &amp; Alumni</h3>
+            <div class="p-5 rounded-3xl bg-white border border-border-light shadow-apple space-y-2 apple-motion">
+              <span class="text-[10px] font-mono font-bold text-on-surface uppercase">Tier 03</span>
+              <h3 class="font-bold text-sm text-on-surface">Campus &amp; Alumni</h3>
               <p class="text-xs text-on-surface-variant">DUNITE Media, DU Journalists' Association.</p>
             </div>
-            <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay space-y-2 apple-motion">
+            <div class="p-5 rounded-3xl bg-white border border-border-light shadow-apple space-y-2 apple-motion">
               <span class="text-[10px] font-mono font-bold text-academic-gold uppercase">Tier 04</span>
-              <h3 class="font-bold text-sm text-white">Byte-Sized Syndication</h3>
+              <h3 class="font-bold text-sm text-on-surface">Byte-Sized Feeds</h3>
               <p class="text-xs text-on-surface-variant">Executive LinkedIn Spotlights &amp; Newsletters.</p>
             </div>
           </div>
@@ -1182,28 +1187,28 @@
 
         <!-- View 6: Editorial Review Kanban Table -->
         <section id="view-admin" class="view-panel space-y-4">
-          <div class="border-b border-border-overlay pb-3">
+          <div class="border-b border-border-light pb-3">
             <span class="text-xs uppercase font-mono text-dunite-red font-semibold">Board</span>
-            <h2 class="font-display text-xl font-bold text-white">3-Stage Editorial Review</h2>
+            <h2 class="font-display text-xl font-bold text-on-surface">3-Stage Editorial Review</h2>
           </div>
-          <div class="bg-surface-container border border-border-overlay rounded-3xl overflow-hidden shadow-apple">
+          <div class="bg-white border border-border-light rounded-3xl overflow-hidden shadow-apple">
             <table class="w-full text-left text-xs min-w-[650px]">
-              <thead class="bg-surface-container-high text-on-surface-variant font-mono uppercase">
+              <thead class="bg-surface-subtle text-on-surface-variant font-mono uppercase">
                 <tr><th class="p-3">Title</th><th class="p-3">Sector</th><th class="p-3">Author</th><th class="p-3">Status</th><th class="p-3 text-right">Action</th></tr>
               </thead>
-              <tbody id="admin-submissions-table" class="divide-y divide-border-overlay"></tbody>
+              <tbody id="admin-submissions-table" class="divide-y divide-border-light"></tbody>
             </table>
           </div>
         </section>
 
         <!-- View 7: Reach Analytics -->
         <section id="view-analytics" class="view-panel space-y-4">
-          <div class="border-b border-border-overlay pb-3"><h2 class="font-display text-xl font-bold text-white">Syndication Analytics</h2></div>
+          <div class="border-b border-border-light pb-3"><h2 class="font-display text-xl font-bold text-on-surface">Syndication Analytics</h2></div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay"><span class="text-xs text-on-surface-variant font-mono">Total Reach</span><div class="text-2xl font-display font-bold text-academic-gold mt-1">148,200</div></div>
-            <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay"><span class="text-xs text-on-surface-variant font-mono">Placements</span><div class="text-2xl font-display font-bold text-white mt-1">84</div></div>
-            <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay"><span class="text-xs text-on-surface-variant font-mono">Approval Rate</span><div class="text-2xl font-display font-bold text-dunite-red mt-1">82.6%</div></div>
-            <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay"><span class="text-xs text-on-surface-variant font-mono">Review Turnaround</span><div class="text-2xl font-display font-bold text-white mt-1">1.8 hrs</div></div>
+            <div class="p-5 rounded-3xl bg-white border border-border-light shadow-apple"><span class="text-xs text-on-surface-variant font-mono">Total Reach</span><div class="text-2xl font-display font-bold text-dunite-red mt-1">148,200</div></div>
+            <div class="p-5 rounded-3xl bg-white border border-border-light shadow-apple"><span class="text-xs text-on-surface-variant font-mono">Placements</span><div class="text-2xl font-display font-bold text-on-surface mt-1">84</div></div>
+            <div class="p-5 rounded-3xl bg-white border border-border-light shadow-apple"><span class="text-xs text-on-surface-variant font-mono">Approval Rate</span><div class="text-2xl font-display font-bold text-academic-gold mt-1">82.6%</div></div>
+            <div class="p-5 rounded-3xl bg-white border border-border-light shadow-apple"><span class="text-xs text-on-surface-variant font-mono">Review Turnaround</span><div class="text-2xl font-display font-bold text-on-surface mt-1">1.8 hrs</div></div>
           </div>
         </section>
 
@@ -1212,15 +1217,15 @@
   </div>
 
   <!-- ==================================================================== -->
-  <!-- 5. EXPLODED PRESS KIT MODAL DIALOG (With Skeleton Preloader)          -->
+  <!-- 5. EXPLODED PRESS KIT MODAL DIALOG (Light Mode)                      -->
   <!-- ==================================================================== -->
-  <dialog id="story-dialog" class="w-[min(94vw,680px)] bg-surface-container-high border border-border-overlay rounded-3xl text-on-surface p-0 shadow-2xl backdrop:bg-black/85 apple-motion">
-    <div class="p-4 border-b border-border-overlay flex justify-between items-center bg-surface-navy">
+  <dialog id="story-dialog" class="w-[min(94vw,680px)] bg-white border border-border-light rounded-3xl text-on-surface p-0 shadow-apple-hover backdrop:bg-slate-900/40 apple-motion">
+    <div class="p-4 border-b border-border-light flex justify-between items-center bg-surface-subtle">
       <div class="flex items-center gap-2">
-        <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-dunite-red text-white font-bold">PRESS KIT</span>
+        <span class="text-[9px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-dunite-red text-white font-bold">PRESS KIT</span>
         <span id="dialog-story-id" class="text-xs font-mono text-on-surface-variant">DAIN-2026</span>
       </div>
-      <button onclick="document.getElementById('story-dialog').close()" class="p-1 text-on-surface-variant hover:text-white apple-tap">
+      <button onclick="document.getElementById('story-dialog').close()" class="p-1 text-on-surface-variant hover:text-on-surface apple-tap">
         <span class="material-symbols-outlined">close</span>
       </button>
     </div>
@@ -1237,19 +1242,18 @@
   </dialog>
 
   <!-- Global Toast Notification -->
-  <div id="toast" role="status" aria-live="polite" class="toast fixed bottom-6 right-6 max-w-sm bg-surface-container-high border border-academic-gold/30 rounded-2xl shadow-apple p-3.5 z-[70] flex gap-2.5 items-center">
-    <span id="toast-icon" class="material-symbols-outlined text-academic-gold text-xl">check_circle</span>
-    <p id="toast-message" class="text-xs font-medium text-white leading-tight"></p>
+  <div id="toast" role="status" aria-live="polite" class="toast fixed bottom-6 right-6 max-w-sm bg-white border border-border-light rounded-2xl shadow-apple-hover p-3.5 z-[70] flex gap-2.5 items-center">
+    <span id="toast-icon" class="material-symbols-outlined text-dunite-red text-xl">check_circle</span>
+    <p id="toast-message" class="text-xs font-medium text-on-surface leading-tight"></p>
   </div>
 
   <!-- ==================================================================== -->
-  <!-- 6. JAVASCRIPT CONTROLLER (Skeleton Transitions, Fast Navigation)    -->
+  <!-- 6. JAVASCRIPT CONTROLLER                                             -->
   <!-- ==================================================================== -->
   <script>
     (() => {
       "use strict";
 
-      // Seed Verified Stories Data (Monochromatic / Gold / Red only)
       const seedStories = [
         {
           id: "DAIN-2026-01",
@@ -1353,7 +1357,7 @@
       let wizardStep = 1;
       let toastTimeout = null;
 
-      // Fast Skeleton Transition Engine (Apple Perceived Performance)
+      // Fast Skeleton Shimmer Transition (Perceived Speed)
       function triggerSkeletonTransition(callback) {
         const sk = document.getElementById("skeleton-screen");
         if (sk) {
@@ -1362,8 +1366,8 @@
             callback();
             setTimeout(() => {
               sk.classList.add("hidden");
-            }, 160);
-          }, 140);
+            }, 140);
+          }, 120);
         } else {
           callback();
         }
@@ -1406,7 +1410,7 @@
         if (tag) tag.classList.toggle("hidden", !val.trim().toLowerCase().endsWith("@du.ac.bd"));
       };
 
-      // App View Switcher with Smooth Transition
+      // App View Switcher
       window.switchView = function(viewName) {
         document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
         document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
@@ -1462,30 +1466,30 @@
         toastTimeout = setTimeout(() => toast.classList.remove("show"), 3200);
       };
 
-      // Story Card Renderer: STRICT COLOR PALETTE (Gold, Red, Monochrome)
+      // Story Card in Light Mode
       function renderStoryCardHTML(story) {
         return `
-          <div class="p-5 rounded-3xl bg-surface-container border border-border-overlay hover:border-academic-gold/40 apple-motion flex flex-col justify-between group shadow-apple">
+          <div class="p-5 rounded-3xl bg-white border border-border-light hover:border-academic-gold shadow-apple hover:shadow-apple-hover apple-motion flex flex-col justify-between group">
             <div class="space-y-2.5">
               <div class="flex items-center justify-between gap-2">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase font-bold border border-academic-gold/30 bg-academic-gold/5 text-academic-gold">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase font-bold border border-academic-gold/30 bg-amber-50 text-academic-gold">
                   ${story.category}
                 </span>
                 <span class="text-[11px] font-mono text-on-surface-variant">${story.date}</span>
               </div>
-              <h4 class="font-bold text-sm text-white group-hover:text-academic-gold apple-motion leading-snug">
+              <h4 class="font-bold text-sm text-on-surface group-hover:text-dunite-red apple-motion leading-snug">
                 ${story.headline}
               </h4>
               <p class="text-xs text-on-surface-variant line-clamp-2 leading-relaxed">
                 ${story.summary}
               </p>
             </div>
-            <div class="pt-3 mt-3 border-t border-border-overlay flex items-center justify-between">
+            <div class="pt-3 mt-3 border-t border-border-light flex items-center justify-between">
               <div class="flex items-center gap-1.5 text-[11px] text-on-surface-variant font-mono truncate max-w-[120px]">
                 <span class="material-symbols-outlined text-sm text-academic-gold">verified</span>
                 <span class="truncate">${story.author}</span>
               </div>
-              <button onclick="openPressKit('${story.id}')" class="text-xs font-mono font-semibold text-academic-gold hover:text-white flex items-center gap-0.5 apple-tap">
+              <button onclick="openPressKit('${story.id}')" class="text-xs font-mono font-semibold text-dunite-red hover:underline flex items-center gap-0.5 apple-tap">
                 <span>Press Kit</span>
                 <span class="material-symbols-outlined text-sm">arrow_forward</span>
               </button>
@@ -1508,7 +1512,7 @@
           <div class="col-span-3 text-center py-12 space-y-2">
             <span class="material-symbols-outlined text-3xl text-on-surface-variant">search_off</span>
             <p class="text-on-surface-variant font-mono text-xs">No verified stories found.</p>
-            <button onclick="renderStoriesDirectory('All')" class="px-3 py-1 rounded-full border border-academic-gold text-academic-gold text-xs font-mono">Reset Filter</button>
+            <button onclick="renderStoriesDirectory('All')" class="px-3 py-1 rounded-full border border-dunite-red text-dunite-red text-xs font-mono">Reset Filter</button>
           </div>
         `;
       }
@@ -1525,14 +1529,14 @@
         const table = document.getElementById("admin-submissions-table");
         if (!table) return;
         table.innerHTML = stories.map(s => `
-          <tr class="hover:bg-surface-container-high/40 apple-motion">
-            <td class="p-3"><p class="font-bold text-white max-w-[240px] truncate">${s.headline}</p><span class="text-[10px] font-mono text-on-surface-variant">${s.id}</span></td>
-            <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-mono uppercase bg-surface-navy border border-border-overlay text-academic-gold">${s.category}</span></td>
-            <td class="p-3"><p class="font-medium text-white">${s.author}</p></td>
-            <td class="p-3"><span class="status-chip ${s.status === 'Approved' ? 'status-approved' : 'status-review'} px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono">${s.status}</span></td>
+          <tr class="hover:bg-surface-subtle apple-motion">
+            <td class="p-3"><p class="font-bold text-on-surface max-w-[240px] truncate">${s.headline}</p><span class="text-[10px] font-mono text-on-surface-variant">${s.id}</span></td>
+            <td class="p-3"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase bg-amber-50 text-academic-gold border border-academic-gold/30">${s.category}</span></td>
+            <td class="p-3"><p class="font-medium text-on-surface">${s.author}</p></td>
+            <td class="p-3"><span class="status-chip ${s.status === 'Approved' ? 'status-approved' : 'status-review'} px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono">${s.status}</span></td>
             <td class="p-3 text-right space-x-2">
-              <button onclick="openPressKit('${s.id}')" class="text-academic-gold hover:underline font-mono text-xs apple-tap">Review</button>
-              ${s.status !== 'Approved' ? `<button onclick="approveAdminStory('${s.id}')" class="px-2 py-1 bg-dunite-red hover:bg-red-700 text-white rounded-lg text-[10px] font-bold uppercase font-mono apple-tap">Approve</button>` : ''}
+              <button onclick="openPressKit('${s.id}')" class="text-dunite-red hover:underline font-mono text-xs apple-tap font-semibold">Review</button>
+              ${s.status !== 'Approved' ? `<button onclick="approveAdminStory('${s.id}')" class="px-2.5 py-1 bg-dunite-red hover:bg-red-700 text-white rounded-xl text-[10px] font-bold uppercase font-mono apple-tap shadow-sm">Approve</button>` : ''}
             </td>
           </tr>
         `).join("");
@@ -1549,7 +1553,7 @@
         }
       };
 
-      // Modal Dialog with Skeleton Loader Shimmer
+      // Modal Dialog with Skeleton Loader in Light Mode
       window.openPressKit = function(id) {
         const story = stories.find(s => s.id === id);
         if (!story) return;
@@ -1565,36 +1569,36 @@
 
         setTimeout(() => {
           body.innerHTML = `
-            <div class="p-4 rounded-2xl bg-surface-container border border-border-overlay space-y-2">
+            <div class="p-4 rounded-2xl bg-surface-subtle border border-border-light space-y-2">
               <div class="flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
                 <span class="text-dunite-red font-bold uppercase">FOR IMMEDIATE RELEASE</span>
                 <span>${story.date}</span>
               </div>
-              <h2 class="font-display text-lg font-bold text-white">${story.headline}</h2>
+              <h2 class="font-display text-lg font-bold text-on-surface">${story.headline}</h2>
               <div class="flex flex-wrap gap-2 text-xs font-mono pt-1">
-                <span class="px-2.5 py-0.5 rounded-full bg-surface-navy border border-border-overlay text-academic-gold">${story.category}</span>
-                <span class="px-2.5 py-0.5 rounded-full bg-academic-gold/10 text-academic-gold border border-academic-gold/20">&check; DU Verified</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-white border border-border-light text-academic-gold font-semibold">${story.category}</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-academic-gold border border-academic-gold/30 font-semibold">&check; DU Verified</span>
               </div>
             </div>
-            <div class="p-4 rounded-2xl bg-surface-container-lowest border border-academic-gold/30 space-y-2">
+            <div class="p-4 rounded-2xl bg-amber-50/50 border border-academic-gold/30 space-y-2">
               <div class="flex items-center justify-between">
                 <span class="text-xs uppercase font-mono font-bold text-academic-gold">Executive Summary</span>
-                <button onclick="navigator.clipboard.writeText('${story.summary.replace(/'/g, "\\'")}'); showToast('Copied to clipboard!', 'content_copy')" class="text-[11px] font-mono text-academic-gold hover:underline apple-tap">Copy</button>
+                <button onclick="navigator.clipboard.writeText('${story.summary.replace(/'/g, "\\'")}'); showToast('Copied to clipboard!', 'content_copy')" class="text-[11px] font-mono text-dunite-red hover:underline apple-tap font-semibold">Copy</button>
               </div>
               <p class="text-xs text-on-surface leading-relaxed">${story.summary}</p>
             </div>
-            <div class="p-4 rounded-2xl bg-surface-container border border-border-overlay space-y-1">
-              <span class="text-xs uppercase font-mono font-bold text-white">Full Story</span>
+            <div class="p-4 rounded-2xl bg-surface-subtle border border-border-light space-y-1">
+              <span class="text-xs uppercase font-mono font-bold text-on-surface">Full Story</span>
               <p class="text-xs text-on-surface-variant leading-relaxed">${story.detailedStory || story.summary}</p>
             </div>
-            <div class="p-4 rounded-2xl bg-surface-container-lowest border border-border-overlay flex items-center justify-between gap-4">
-              <div><span class="text-[10px] font-mono uppercase text-on-surface-variant">Media Contact</span><p class="text-xs font-bold text-white">${story.author} &bull; <span class="text-academic-gold font-mono">${story.authorEmail || 'contact@du.ac.bd'}</span></p></div>
-              <button onclick="navigator.clipboard.writeText('# ${story.headline}\\n\\n${story.summary}'); showToast('Press release copied!', 'assignment_turned_in')" class="px-3 py-1.5 rounded-xl bg-dunite-red text-white text-xs font-mono font-bold hover:bg-red-700 apple-tap">Copy Release</button>
+            <div class="p-4 rounded-2xl bg-surface-subtle border border-border-light flex items-center justify-between gap-4">
+              <div><span class="text-[10px] font-mono uppercase text-on-surface-variant">Media Contact</span><p class="text-xs font-bold text-on-surface">${story.author} &bull; <span class="text-academic-gold font-mono">${story.authorEmail || 'contact@du.ac.bd'}</span></p></div>
+              <button onclick="navigator.clipboard.writeText('# ${story.headline}\\n\\n${story.summary}'); showToast('Press release copied!', 'assignment_turned_in')" class="px-3.5 py-1.5 rounded-xl bg-dunite-red text-white text-xs font-mono font-bold hover:bg-red-700 apple-tap shadow-sm">Copy Release</button>
             </div>
           `;
           sk.classList.add("hidden");
           body.classList.remove("hidden");
-        }, 180);
+        }, 160);
       };
 
       // Wizard Controls
@@ -1702,16 +1706,16 @@
       document.querySelectorAll(".filter-pill").forEach(btn => {
         btn.addEventListener("click", () => {
           document.querySelectorAll(".filter-pill").forEach(p => {
-            p.classList.remove("active", "border-academic-gold", "bg-academic-gold/10", "text-academic-gold");
-            p.classList.add("border-border-overlay", "bg-surface-container", "text-on-surface-variant");
+            p.classList.remove("active", "border-dunite-red", "bg-dunite-red/10", "text-dunite-red");
+            p.classList.add("border-border-light", "bg-white", "text-on-surface-variant");
           });
-          btn.classList.add("active", "border-academic-gold", "bg-academic-gold/10", "text-academic-gold");
-          btn.classList.remove("border-border-overlay", "bg-surface-container", "text-on-surface-variant");
+          btn.classList.add("active", "border-dunite-red", "bg-dunite-red/10", "text-dunite-red");
+          btn.classList.remove("border-border-light", "bg-white", "text-on-surface-variant");
           renderStoriesDirectory(btn.dataset.sector);
         });
       });
 
-      // Simulation Demo
+      // Simulation Demo in Light Mode
       document.getElementById("run-simulation-btn")?.addEventListener("click", async () => {
         const log = document.getElementById("pipeline-log");
         const stages = [
