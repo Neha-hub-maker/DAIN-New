@@ -1,0 +1,11 @@
+﻿services:
+  - type: web
+    name: dain-backend
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: https://neha-hub-maker.github.io,http://localhost:3000
