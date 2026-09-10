@@ -1,0 +1,33 @@
+from app.models.dain import (
+    AchievementCategory,
+    AuditLog,
+    AuthSession,
+    CategoryFieldDefinition,
+    DuplicateMatch,
+    EmailVerificationToken,
+    MediaAsset,
+    MediaLink,
+    MediaPackage,
+    Review,
+    Submission,
+    SubmissionFieldValue,
+    User,
+    ValidationResult,
+)
+
+__all__ = [
+    "AchievementCategory",
+    "AuditLog",
+    "AuthSession",
+    "CategoryFieldDefinition",
+    "DuplicateMatch",
+    "EmailVerificationToken",
+    "MediaAsset",
+    "MediaLink",
+    "MediaPackage",
+    "Review",
+    "Submission",
+    "SubmissionFieldValue",
+    "User",
+    "ValidationResult",
+]
