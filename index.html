@@ -949,7 +949,8 @@
         </div>
 
         <button
-          onclick="switchView('submit')"
+          id="topbar-submit-btn"
+          onclick="startPublishFlow()"
           class="hidden sm:flex items-center gap-1.5 bg-dunite-red hover:bg-red-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider shadow-apple hover:shadow-glow apple-motion apple-tap"
         >
           <span class="material-symbols-outlined text-base">publish</span>
@@ -1805,8 +1806,11 @@
           analytics: "Analytics"
         };
         document.getElementById("view-title").textContent = titles[viewName] || "DAIN";
-        document.getElementById("topbar-crumb").textContent = `DAIN // ${viewName.toUpperCase()}`;
+        document.getElementById("topbar-crumb").textContent = "DAIN //";
         document.title = `DAIN | ${titles[viewName] || 'PR Platform'} • Dhaka University`;
+
+        const topbarSubmit = document.getElementById("topbar-submit-btn");
+        if (topbarSubmit) topbarSubmit.style.display = viewName === "submit" ? "none" : "";
 
         document.getElementById("sidebar").classList.remove("open");
         document.getElementById("sidebar-scrim").classList.add("hidden");
@@ -1997,37 +2001,88 @@
         }
       }
 
+      function highlightErrorField(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.add("!border-dunite-red", "ring-2", "ring-red-100");
+        el.focus();
+        const clear = () => el.classList.remove("!border-dunite-red", "ring-2", "ring-red-100");
+        el.addEventListener("input", clear, { once: true });
+        el.addEventListener("change", clear, { once: true });
+      }
+
+      function clearErrorHighlights() {
+        document.querySelectorAll(".ring-red-100").forEach(el => {
+          el.classList.remove("!border-dunite-red", "ring-2", "ring-red-100");
+        });
+      }
+
       if (btnNext) {
         btnNext.addEventListener("click", () => {
+          clearErrorHighlights();
           if (wizardStep === 1) {
+            const cat = document.getElementById("category").value;
             const h = document.getElementById("headline").value.trim();
             const s = document.getElementById("summary").value.trim();
-            if (h.length < 10 || s.length < 20 || !document.getElementById("category").value) {
-              showToast("Please enter Sector, Headline (min 10) and Summary.", "error");
+
+            if (!cat) {
+              highlightErrorField("category");
+              showToast("Please select an Achievement Sector.", "error");
               return;
             }
-            wizardStep = 2; updateWizardUI();
+            if (!h || h.length < 5) {
+              highlightErrorField("headline");
+              showToast(`Headline is too short (min 5 characters, currently ${h.length}).`, "error");
+              return;
+            }
+            if (!s || s.length < 5) {
+              highlightErrorField("summary");
+              showToast(`Executive Summary is too short (min 5 characters, currently ${s.length}).`, "error");
+              return;
+            }
+            wizardStep = 2;
+            updateWizardUI();
           } else if (wizardStep === 2) {
-            const inst = document.getElementById("institution").value.trim();
             const date = document.getElementById("achievement-date").value;
+            const inst = document.getElementById("institution").value.trim();
             const em = document.getElementById("author-email").value.trim();
-            if (!inst || !date || !em) {
-              showToast("Please fill date, institution, and DU email.", "error");
+
+            if (!date) {
+              highlightErrorField("achievement-date");
+              showToast("Please select the achievement date.", "error");
               return;
             }
-            wizardStep = 3; updateWizardUI();
+            if (!inst) {
+              highlightErrorField("institution");
+              showToast("Please enter your Department or Institution.", "error");
+              return;
+            }
+            if (!em) {
+              highlightErrorField("author-email");
+              showToast("Please enter your DU institutional email.", "error");
+              return;
+            }
+            if (!em.toLowerCase().endsWith("@du.ac.bd")) {
+              highlightErrorField("author-email");
+              showToast("Institutional email must end with @du.ac.bd", "error");
+              return;
+            }
+            wizardStep = 3;
+            updateWizardUI();
           } else if (wizardStep === 3) {
-            if (!document.getElementById("confirm-box").checked) {
-              showToast("Please check the certification box.", "error");
+            const cb = document.getElementById("confirm-box");
+            if (!cb.checked) {
+              highlightErrorField("confirm-box");
+              showToast("Please check the certification box to authorize syndication.", "error");
               return;
             }
             const newStory = {
               id: `DAIN-2026-${String(Date.now()).slice(-3)}`,
               headline: document.getElementById("headline").value.trim(),
               category: document.getElementById("category").value,
-              subType: document.getElementById("sub-type").value.trim(),
+              subType: document.getElementById("sub-type").value.trim() || "Milestone",
               date: document.getElementById("achievement-date").value || new Date().toISOString().slice(0, 10),
-              author: document.getElementById("sidebar-user-name")?.textContent || "DU Contributor",
+              author: (currentUser && currentUser.name) ? currentUser.name : (document.getElementById("sidebar-user-name")?.textContent || "DU Contributor"),
               authorEmail: document.getElementById("author-email").value.trim(),
               institution: document.getElementById("institution").value.trim(),
               status: "Approved",
@@ -2035,13 +2090,14 @@
               impact: document.getElementById("impact").value.trim() || "Verified Milestone",
               summary: document.getElementById("summary").value.trim(),
               detailedStory: document.getElementById("summary").value.trim(),
-              evidenceLink: document.getElementById("evidence-link").value.trim()
+              evidenceLink: document.getElementById("evidence-link").value.trim() || "https://du.ac.bd"
             };
             stories.unshift(newStory);
             localStorage.setItem("dain_stories", JSON.stringify(stories));
-            showToast("Story submitted and syndicated to media!", "verified");
+            showToast("Story submitted and syndicated to 100+ media outlets!", "verified");
             document.getElementById("story-form").reset();
-            wizardStep = 1; updateWizardUI();
+            wizardStep = 1;
+            updateWizardUI();
             switchView("stories");
           }
         });
@@ -2133,15 +2189,15 @@
       function updateCounters() {
         if (headlineInput && headlineCounter) {
           const len = headlineInput.value.length;
-          headlineCounter.textContent = `${len} / 120 (min 10)`;
-          headlineCounter.classList.toggle("text-dunite-red", len > 0 && len < 10);
-          headlineCounter.classList.toggle("text-academic-gold", len >= 10);
+          headlineCounter.textContent = len >= 5 ? `✓ ${len} / 120` : `${len} / 120 (min 5)`;
+          headlineCounter.classList.toggle("text-dunite-red", len > 0 && len < 5);
+          headlineCounter.classList.toggle("text-academic-gold", len >= 5);
         }
         if (summaryInput && summaryCounter) {
           const len = summaryInput.value.length;
-          summaryCounter.textContent = `${len} / 600 (min 30)`;
-          summaryCounter.classList.toggle("text-dunite-red", len > 0 && len < 30);
-          summaryCounter.classList.toggle("text-academic-gold", len >= 30);
+          summaryCounter.textContent = len >= 5 ? `✓ ${len} / 600` : `${len} / 600 (min 5)`;
+          summaryCounter.classList.toggle("text-dunite-red", len > 0 && len < 5);
+          summaryCounter.classList.toggle("text-academic-gold", len >= 5);
         }
       }
 
