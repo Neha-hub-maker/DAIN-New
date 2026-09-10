@@ -352,7 +352,7 @@
         </nav>
 
         <!-- CTA Action Buttons -->
-        <div class="flex items-center gap-2.5">
+        <div id="public-header-auth" class="flex items-center gap-2.5">
           <button
             onclick="openAuthModal('login')"
             class="px-4 py-2 rounded-xl text-xs font-mono font-medium text-on-surface border border-border-light hover:border-dunite-red/40 hover:bg-surface-subtle apple-motion apple-tap"
@@ -360,7 +360,7 @@
             Log In
           </button>
           <button
-            onclick="enterAppWorkspace('submit')"
+            onclick="startPublishFlow()"
             class="bg-dunite-red hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-apple hover:shadow-glow apple-motion apple-tap"
           >
             <span class="material-symbols-outlined text-base">publish</span>
@@ -390,7 +390,7 @@
         <!-- Action Buttons -->
         <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
           <button
-            onclick="enterAppWorkspace('submit')"
+            onclick="startPublishFlow()"
             class="bg-dunite-red hover:bg-red-700 text-white px-7 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-apple hover:shadow-glow apple-motion apple-tap"
           >
             <span class="material-symbols-outlined text-lg">edit_document</span>
@@ -686,6 +686,17 @@
     </div>
 
     <div class="p-6 space-y-4">
+      <!-- Submission Gating Notification Banner -->
+      <div id="auth-submit-gate-banner" class="hidden p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 space-y-1">
+        <div class="flex items-center gap-2 font-bold text-xs text-amber-900">
+          <span class="material-symbols-outlined text-base text-academic-gold">lock</span>
+          <span>Authentication Required to Publish Achievement</span>
+        </div>
+        <p class="text-[11px] text-amber-800 leading-relaxed font-sans">
+          Please <strong>Sign In</strong> with your DU credentials, <strong>Register</strong> a new profile, or choose a <strong>Quick Demo</strong> profile. Once authenticated, you will be taken straight to your story draft!
+        </p>
+      </div>
+
       <!-- 1. Sign In Form -->
       <form id="auth-form-login" onsubmit="handleLoginSubmit(event)" class="space-y-4">
         <div>
@@ -970,7 +981,7 @@
               <h2 class="font-display text-xl font-bold text-on-surface">Live PR &amp; Syndication Stream</h2>
               <p class="text-xs text-on-surface-variant">Manage submissions and monitor 3-stage editorial validation.</p>
             </div>
-            <button onclick="switchView('submit')" class="bg-dunite-red hover:bg-red-700 text-white px-5 py-2.5 rounded-2xl text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 apple-tap shadow-apple">
+            <button onclick="startPublishFlow()" class="bg-dunite-red hover:bg-red-700 text-white px-5 py-2.5 rounded-2xl text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 apple-tap shadow-apple">
               <span class="material-symbols-outlined text-base">add_circle</span>
               <span>Submit Story</span>
             </button>
@@ -1483,13 +1494,23 @@
         });
       };
 
-      let currentUser = JSON.parse(localStorage.getItem("dain_user")) || {
-        name: "Tanvir Rahman",
-        email: "tanvir.cse@du.ac.bd",
-        role: "Student",
-        institution: "Department of CSE, Faculty of Science",
-        isVerified: true
+      let savedUser = null;
+      try {
+        savedUser = JSON.parse(localStorage.getItem("dain_user"));
+      } catch (e) {
+        savedUser = null;
+      }
+
+      let currentUser = (savedUser && savedUser.isLoggedIn) ? savedUser : {
+        name: "Guest Contributor",
+        email: "",
+        role: "Guest",
+        institution: "University of Dhaka",
+        isVerified: false,
+        isLoggedIn: false
       };
+
+      let pendingPublishAction = null;
 
       window.setAuthTab = function(tab) {
         ["login", "register", "demo"].forEach(t => {
@@ -1516,42 +1537,147 @@
       };
       window.checkPublicAuthEmail = window.checkRegisterEmail;
 
-      window.openAuthModal = function(tab = "login") {
+      window.openAuthModal = function(tab = "login", isFromPublishGate = false) {
+        const banner = document.getElementById("auth-submit-gate-banner");
+        if (banner) {
+          banner.classList.toggle("hidden", !isFromPublishGate);
+        }
         setAuthTab(tab);
         document.getElementById("auth-modal").showModal();
       };
 
+      window.startPublishFlow = function(sector = null) {
+        if (currentUser && currentUser.isLoggedIn) {
+          enterAppWorkspace("submit");
+          if (sector && typeof sector === "string" && sector !== "submit") {
+            const sel = document.getElementById("category");
+            if (sel) sel.value = sector;
+          }
+        } else {
+          pendingPublishAction = {
+            view: "submit",
+            sector: (sector && typeof sector === "string" && sector !== "submit") ? sector : null
+          };
+          openAuthModal("register", true);
+          showToast("Please sign in or register to publish your achievement", "lock");
+        }
+      };
+
+      window.updatePublicHeaderAuthUI = function(user) {
+        const container = document.getElementById("public-header-auth");
+        if (!container) return;
+        if (user && user.isLoggedIn) {
+          container.innerHTML = `
+            <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border-light bg-white text-xs font-mono text-on-surface shadow-sm">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span class="font-bold truncate max-w-[120px]">${user.name}</span>
+              <span class="text-academic-gold text-[10px] font-bold">(${user.role})</span>
+            </div>
+            <button
+              onclick="enterAppWorkspace('home')"
+              class="px-3.5 py-2 rounded-xl text-xs font-mono font-semibold text-on-surface border border-border-light hover:border-dunite-red/40 hover:bg-surface-subtle apple-motion apple-tap"
+            >
+              Studio
+            </button>
+            <button
+              onclick="startPublishFlow()"
+              class="bg-dunite-red hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-apple hover:shadow-glow apple-motion apple-tap"
+            >
+              <span class="material-symbols-outlined text-base">publish</span>
+              <span>Submit</span>
+            </button>
+            <button
+              onclick="handleSignOut()"
+              class="p-2 rounded-xl text-on-surface-variant hover:text-dunite-red hover:bg-surface-subtle border border-border-light apple-tap"
+              title="Sign Out"
+            >
+              <span class="material-symbols-outlined text-base">logout</span>
+            </button>
+          `;
+        } else {
+          container.innerHTML = `
+            <button
+              onclick="openAuthModal('login')"
+              class="px-4 py-2 rounded-xl text-xs font-mono font-medium text-on-surface border border-border-light hover:border-dunite-red/40 hover:bg-surface-subtle apple-motion apple-tap"
+            >
+              Log In
+            </button>
+            <button
+              onclick="startPublishFlow()"
+              class="bg-dunite-red hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-apple hover:shadow-glow apple-motion apple-tap"
+            >
+              <span class="material-symbols-outlined text-base">publish</span>
+              <span>Submit</span>
+            </button>
+          `;
+        }
+      };
+
       window.applyUserSession = function(user) {
         currentUser = user;
-        localStorage.setItem("dain_user", JSON.stringify(user));
+        if (user && user.isLoggedIn) {
+          localStorage.setItem("dain_user", JSON.stringify(user));
+        } else {
+          localStorage.removeItem("dain_user");
+        }
         
         const nameEl = document.getElementById("sidebar-user-name");
-        if (nameEl) nameEl.textContent = user.name;
+        if (nameEl) nameEl.textContent = user.name || "DU Member";
 
         const roleEl = document.getElementById("sidebar-user-role");
-        if (roleEl) roleEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-academic-gold"></span>Verified ${user.role || 'Member'}`;
+        if (roleEl) {
+          if (user.isLoggedIn) {
+            roleEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-academic-gold"></span>Verified ${user.role || 'Member'}`;
+          } else {
+            roleEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Guest Contributor`;
+          }
+        }
 
         const initEl = document.getElementById("sidebar-user-initials");
         if (initEl) {
-          const parts = user.name.trim().split(" ");
-          initEl.textContent = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : user.name.slice(0, 2).toUpperCase();
+          const parts = (user.name || "DU").trim().split(" ");
+          initEl.textContent = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : (user.name || "DU").slice(0, 2).toUpperCase();
         }
         
         // Auto-fill wizard fields
         const emailField = document.getElementById("author-email");
-        if (emailField) emailField.value = user.email;
+        if (emailField && user.isLoggedIn && user.email) emailField.value = user.email;
         const instField = document.getElementById("institution");
-        if (instField && user.institution) instField.value = user.institution;
+        if (instField && user.isLoggedIn && user.institution) instField.value = user.institution;
+
+        // Sync public header
+        updatePublicHeaderAuthUI(user);
       };
+
+      function completeAuthSuccess(user, defaultView = "home") {
+        user.isLoggedIn = true;
+        applyUserSession(user);
+        document.getElementById("auth-modal").close();
+
+        if (pendingPublishAction) {
+          const act = pendingPublishAction;
+          pendingPublishAction = null;
+          showToast(`Account verified! Loading story submission...`, "verified");
+          enterAppWorkspace("submit");
+          if (act.sector) {
+            const sel = document.getElementById("category");
+            if (sel) sel.value = act.sector;
+          }
+        } else {
+          showToast(`Welcome back, ${user.name}!`, "verified");
+          enterAppWorkspace(defaultView);
+        }
+      }
 
       window.handleSignOut = function() {
         localStorage.removeItem("dain_user");
         currentUser = {
-          name: "DU Contributor",
-          email: "guest@du.ac.bd",
+          name: "Guest Contributor",
+          email: "",
           role: "Guest",
           institution: "University of Dhaka",
-          isVerified: false
+          isVerified: false,
+          isLoggedIn: false
         };
         applyUserSession(currentUser);
         showToast("Signed out from DAIN session.", "logout");
@@ -1568,7 +1694,6 @@
           return;
         }
 
-        // Try backend API first, fallback to verified local session
         try {
           const res = await fetch("http://127.0.0.1:8000/auth/login", {
             method: "POST",
@@ -1576,25 +1701,19 @@
             body: JSON.stringify({ email, password })
           });
           if (res.ok) {
-            const data = await res.json();
             showToast("FastAPI Server: Logged in successfully!", "verified");
           }
-        } catch (err) {
-          // Backend offline - continue seamlessly in client mode
-        }
+        } catch (err) {}
 
         const name = email.split("@")[0].replace(".", " ").replace(/\b\w/g, l => l.toUpperCase());
-        applyUserSession({
+        const userObj = {
           name: name || "DU Member",
           email: email,
           role: email.includes("editor") ? "Editor" : (email.includes("dr") || email.includes("prof") ? "Faculty" : "Student"),
           institution: "University of Dhaka",
           isVerified: true
-        });
-
-        document.getElementById("auth-modal").close();
-        showToast(`Welcome back, ${currentUser.name}!`, "verified");
-        enterAppWorkspace("home");
+        };
+        completeAuthSuccess(userObj, userObj.role === "Editor" ? "admin" : "home");
       };
 
       window.handleRegisterSubmit = async function(e) {
@@ -1617,17 +1736,14 @@
           });
         } catch (err) {}
 
-        applyUserSession({
+        const userObj = {
           name: name,
           email: email,
           role: role,
           institution: "University of Dhaka",
           isVerified: true
-        });
-
-        document.getElementById("auth-modal").close();
-        showToast(`Registered & Verified as ${role}!`, "verified");
-        enterAppWorkspace("home");
+        };
+        completeAuthSuccess(userObj, role === "Editor" ? "admin" : "home");
       };
 
       window.loginAsDemo = function(roleType) {
@@ -1656,14 +1772,16 @@
         };
 
         const demo = demos[roleType] || demos.student;
-        applyUserSession(demo);
-        document.getElementById("auth-modal").close();
-        showToast(`Switched to ${demo.role}: ${demo.name}`, "verified");
-        enterAppWorkspace(roleType === "editor" ? "admin" : "home");
+        completeAuthSuccess({ ...demo }, roleType === "editor" ? "admin" : "home");
       };
 
       // App View Switcher
       window.switchView = function(viewName) {
+        if (viewName === "submit" && (!currentUser || !currentUser.isLoggedIn)) {
+          startPublishFlow();
+          return;
+        }
+
         document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
         document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
 
@@ -1705,9 +1823,7 @@
       };
 
       window.openSubmitWithSector = function(sector) {
-        switchView("submit");
-        const sel = document.getElementById("category");
-        if (sel) sel.value = sector;
+        startPublishFlow(sector);
       };
 
       window.showToast = function(msg, icon = "check_circle") {
