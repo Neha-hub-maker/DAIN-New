@@ -582,40 +582,62 @@
           <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-on-surface">How It Works</h2>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="p-6 rounded-3xl bg-white border border-border-light shadow-apple space-y-2.5 apple-motion">
-            <span class="text-xs font-mono font-bold text-dunite-red">01 • AUTH</span>
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined icon-bold text-academic-gold">badge</span>
-              <h4 class="font-bold text-sm text-on-surface">Authenticate</h4>
+        <!-- Connected Horizontal Flow -->
+        <div class="flex flex-col md:flex-row items-stretch gap-0">
+          <!-- Step: Authenticate -->
+          <div class="flex-1 p-6 rounded-3xl md:rounded-none md:first:rounded-l-3xl bg-white border border-border-light shadow-apple space-y-3 apple-motion relative">
+            <div class="w-11 h-11 rounded-2xl bg-[#0F172A] text-white flex items-center justify-center shadow-sm">
+              <span class="material-symbols-outlined icon-bold text-xl">badge</span>
             </div>
+            <h4 class="font-bold text-sm text-on-surface">Authenticate</h4>
             <p class="text-xs text-on-surface-variant leading-relaxed">Instant verification via @du.ac.bd institutional email or alumni records.</p>
           </div>
+          <!-- Arrow -->
+          <div class="hidden md:flex items-center justify-center w-10 -mx-1 z-10">
+            <span class="material-symbols-outlined text-on-surface-variant text-xl">arrow_forward</span>
+          </div>
+          <div class="flex md:hidden items-center justify-center h-8">
+            <span class="material-symbols-outlined text-on-surface-variant text-xl">arrow_downward</span>
+          </div>
 
-          <div class="p-6 rounded-3xl bg-white border border-border-light shadow-apple space-y-2.5 apple-motion">
-            <span class="text-xs font-mono font-bold text-academic-gold">02 • SUBMIT</span>
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined icon-bold text-academic-gold">attach_file</span>
-              <h4 class="font-bold text-sm text-on-surface">Submit Proof</h4>
+          <!-- Step: Submit -->
+          <div class="flex-1 p-6 md:rounded-none bg-white border border-border-light shadow-apple space-y-3 apple-motion relative rounded-3xl">
+            <div class="w-11 h-11 rounded-2xl bg-dunite-red text-white flex items-center justify-center shadow-sm">
+              <span class="material-symbols-outlined icon-bold text-xl">attach_file</span>
             </div>
+            <h4 class="font-bold text-sm text-on-surface">Submit Proof</h4>
             <p class="text-xs text-on-surface-variant leading-relaxed">Draft headline, executive summary, and attach primary evidence.</p>
           </div>
-
-          <div class="p-6 rounded-3xl bg-white border border-border-light shadow-apple space-y-2.5 apple-motion">
-            <span class="text-xs font-mono font-bold text-dunite-red">03 • VALIDATE</span>
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined icon-bold text-academic-gold">policy</span>
-              <h4 class="font-bold text-sm text-on-surface">Validate</h4>
-            </div>
-            <p class="text-xs text-on-surface-variant leading-relaxed">Automated screening, fact-checking, and editorial polishing.</p>
+          <!-- Arrow -->
+          <div class="hidden md:flex items-center justify-center w-10 -mx-1 z-10">
+            <span class="material-symbols-outlined text-on-surface-variant text-xl">arrow_forward</span>
+          </div>
+          <div class="flex md:hidden items-center justify-center h-8">
+            <span class="material-symbols-outlined text-on-surface-variant text-xl">arrow_downward</span>
           </div>
 
-          <div class="p-6 rounded-3xl bg-white border border-border-light shadow-apple space-y-2.5 apple-motion">
-            <span class="text-xs font-mono font-bold text-academic-gold">04 • AMPLIFY</span>
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined icon-bold text-academic-gold">rss_feed</span>
-              <h4 class="font-bold text-sm text-on-surface">Amplify</h4>
+          <!-- Step: Validate -->
+          <div class="flex-1 p-6 md:rounded-none bg-white border border-border-light shadow-apple space-y-3 apple-motion relative rounded-3xl">
+            <div class="w-11 h-11 rounded-2xl bg-[#B8860B] text-white flex items-center justify-center shadow-sm">
+              <span class="material-symbols-outlined icon-bold text-xl">policy</span>
             </div>
+            <h4 class="font-bold text-sm text-on-surface">Validate</h4>
+            <p class="text-xs text-on-surface-variant leading-relaxed">Automated screening, fact-checking, and editorial polishing.</p>
+          </div>
+          <!-- Arrow -->
+          <div class="hidden md:flex items-center justify-center w-10 -mx-1 z-10">
+            <span class="material-symbols-outlined text-on-surface-variant text-xl">arrow_forward</span>
+          </div>
+          <div class="flex md:hidden items-center justify-center h-8">
+            <span class="material-symbols-outlined text-on-surface-variant text-xl">arrow_downward</span>
+          </div>
+
+          <!-- Step: Amplify -->
+          <div class="flex-1 p-6 rounded-3xl md:rounded-none md:last:rounded-r-3xl bg-white border border-border-light shadow-apple space-y-3 apple-motion relative">
+            <div class="w-11 h-11 rounded-2xl bg-[#0F172A] text-white flex items-center justify-center shadow-sm">
+              <span class="material-symbols-outlined icon-bold text-xl">rss_feed</span>
+            </div>
+            <h4 class="font-bold text-sm text-on-surface">Amplify</h4>
             <p class="text-xs text-on-surface-variant leading-relaxed">Concentric release across 100+ national, digital, and campus media.</p>
           </div>
         </div>
@@ -968,7 +990,10 @@
       id="topbar"
       class="bg-white/85 backdrop-blur-md fixed top-0 right-0 w-[calc(100%-270px)] border-b border-border-light flex justify-between items-center h-16 px-4 md:px-8 z-30 apple-motion shadow-sm"
     >
-      <div class="flex items-center gap-3 min-w-0">
+      <div class="flex items-center gap-2 min-w-0">
+        <button id="topbar-back-btn" onclick="goBack()" class="hidden p-1.5 text-on-surface-variant hover:text-dunite-red apple-tap rounded-lg hover:bg-surface-subtle" aria-label="Go back" title="Go back">
+          <span class="material-symbols-outlined text-lg">arrow_back</span>
+        </button>
         <button id="open-sidebar" class="lg:hidden p-2 text-on-surface-variant hover:text-dunite-red apple-tap" aria-label="Open navigation">
           <span class="material-symbols-outlined">menu</span>
         </button>
@@ -1820,11 +1845,28 @@
         completeAuthSuccess({ ...demo }, roleType === "editor" ? "admin" : "home");
       };
 
+      // View History Stack for Back Navigation
+      const viewHistory = [];
+      let isNavigatingBack = false;
+
       // App View Switcher
-      window.switchView = function(viewName) {
+      window.switchView = function(viewName, skipHistory) {
         if (viewName === "submit" && (!currentUser || !currentUser.isLoggedIn)) {
           startPublishFlow();
           return;
+        }
+
+        // Push current view to history before switching (unless navigating back)
+        if (!skipHistory && !isNavigatingBack) {
+          const currentActive = document.querySelector(".view-panel.active");
+          if (currentActive) {
+            const currentViewId = currentActive.id.replace("view-", "");
+            if (currentViewId !== viewName) {
+              viewHistory.push(currentViewId);
+            }
+          }
+          // Push browser history state
+          history.pushState({ view: viewName }, "", `#${viewName}`);
         }
 
         document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
@@ -1856,6 +1898,13 @@
         const topbarSubmit = document.getElementById("topbar-submit-btn");
         if (topbarSubmit) topbarSubmit.style.display = viewName === "submit" ? "none" : "";
 
+        // Show/hide back button
+        const backBtn = document.getElementById("topbar-back-btn");
+        if (backBtn) {
+          backBtn.classList.toggle("hidden", viewHistory.length === 0 && viewName === "home");
+          if (viewName !== "home") backBtn.classList.remove("hidden");
+        }
+
         document.getElementById("sidebar").classList.remove("open");
         document.getElementById("sidebar-scrim").classList.add("hidden");
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1869,6 +1918,30 @@
         if (viewName === "personal") renderSectorGrid("Personal", "personal-stories-grid");
         if (viewName === "admin") renderAdminSubmissions();
       };
+
+      // Go Back Function
+      window.goBack = function() {
+        if (viewHistory.length > 0) {
+          isNavigatingBack = true;
+          const prevView = viewHistory.pop();
+          switchView(prevView, true);
+          history.back();
+          isNavigatingBack = false;
+        } else {
+          // No history left: go to Studio (home)
+          switchView("home", true);
+        }
+      };
+
+      // Handle browser back/forward buttons
+      window.addEventListener("popstate", function(e) {
+        if (e.state && e.state.view) {
+          isNavigatingBack = true;
+          if (viewHistory.length > 0) viewHistory.pop();
+          switchView(e.state.view, true);
+          isNavigatingBack = false;
+        }
+      });
 
       window.openSubmitWithSector = function(sector) {
         startPublishFlow(sector);
