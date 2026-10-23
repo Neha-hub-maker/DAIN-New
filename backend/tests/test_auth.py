@@ -1,3 +1,6 @@
+import pytest
+
+
 def registration_payload(**overrides):
     payload = {
         "full_name": "Amina Rahman",
@@ -38,6 +41,36 @@ def test_invalid_registration_data(client):
 def test_non_institutional_email_is_rejected(client):
     response = client.post("/auth/register", json=registration_payload(email="amina@example.com"))
 
+    assert response.status_code == 422
+    assert response.json()["detail"] == "A valid institutional email address is required."
+
+
+@pytest.mark.parametrize("email", [
+    "student-2024913694@cs.du.ac.bd",
+    "student-19th-2023112801@mis.du.ac.bd",
+    "student@another-department.du.ac.bd",
+    "student@students.cs.du.ac.bd",
+    "student@CS.DU.AC.BD",
+])
+def test_department_email_can_register_verify_and_log_in(client, email):
+    registration = register_and_verify(client, email=email)
+    assert registration["user"]["is_email_verified"] is False
+    response = client.post("/auth/login", json={"email": email, "password": "secure-password-123"})
+    assert response.status_code == 200
+    assert response.json()["user"]["email"] == email.lower()
+    assert response.json()["user"]["is_email_verified"] is True
+
+
+@pytest.mark.parametrize("domain", [
+    "evildu.ac.bd",
+    "csdu.ac.bd",
+    "du.ac.bd.example.com",
+    "cs.du.ac.bd.example.com",
+    "du-ac-bd.com",
+    "cs.du.example.com",
+])
+def test_lookalike_email_domains_cannot_register(client, domain):
+    response = client.post("/auth/register", json=registration_payload(email=f"student@{domain}"))
     assert response.status_code == 422
     assert response.json()["detail"] == "A valid institutional email address is required."
 
