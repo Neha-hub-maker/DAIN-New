@@ -4,7 +4,7 @@ Backend-only implementation for DAIN (DUNITE Achievement & Impact Network). It c
 
 ## What this MVP does
 
-1. A member registers with an address matching `INSTITUTIONAL_EMAIL_DOMAIN`.
+1. A member registers with an address at `INSTITUTIONAL_EMAIL_DOMAIN` or one of its subdomains (for example, `du.ac.bd`, `cs.du.ac.bd`, or `mis.du.ac.bd`).
 2. The member verifies a one-time, expiring email token, then logs in with an opaque Bearer token.
 3. A verified member creates a draft in an Academic, Startup, or Social Impact category, attaches links/files, and submits it.
 4. DAIN records completeness warnings and likely title duplicates without automatically blocking the member.
@@ -12,7 +12,7 @@ Backend-only implementation for DAIN (DUNITE Achievement & Impact Network). It c
 
 ## Important institutional-verification limitation
 
-The current `@du.ac.bd` check plus one-time token is an **institutional-email verification prototype**. It is not real DUNITE Auth, DUNITE SSO, or OIDC. No DUNITE integration credentials/specification were provided. The prototype boundary is isolated in `app/services/institutional_verification.py`, so an approved DUNITE integration can replace it later.
+The current DU domain/subdomain check plus one-time token is an **institutional-email verification prototype**. It is not real DUNITE Auth, DUNITE SSO, or OIDC. No DUNITE integration credentials/specification were provided. The prototype boundary is isolated in `app/services/institutional_verification.py`, so an approved DUNITE integration can replace it later.
 
 There is also no email-delivery provider in this MVP. For local testing only, use `DEBUG=true` and `EXPOSE_VERIFICATION_TOKEN_IN_RESPONSE=true`; registration will then return a one-time token. Never enable this in a deployed environment.
 
@@ -77,6 +77,8 @@ python -m pytest -q
 python -m uvicorn app.main:app --reload
 ```
 
+From the repository root, run `node --test tests/email-validation.test.cjs` to check frontend email validation across registration, login, and story submission. These checks use Node's built-in test runner and require no npm packages.
+
 Open `http://127.0.0.1:8000/docs`. `GET /health` checks the configured PostgreSQL connection.
 
 ## Environment variables
@@ -84,7 +86,7 @@ Open `http://127.0.0.1:8000/docs`. `GET /health` checks the configured PostgreSQ
 | Variable | Purpose |
 |---|---|
 | `DATABASE_URL` | PostgreSQL SQLAlchemy URL; never commit its password. |
-| `INSTITUTIONAL_EMAIL_DOMAIN` | Allowed domain for the prototype, currently `du.ac.bd`. |
+| `INSTITUTIONAL_EMAIL_DOMAIN` | Allowed root domain and its subdomains for the prototype, currently `du.ac.bd`. |
 | `APP_ENV` | Environment label. |
 | `DEBUG` | Enables development-only behavior; keep `false` in deployment. |
 | `VERIFICATION_TOKEN_TTL_MINUTES` | One-time verification token lifetime; default `60`. |

@@ -12,7 +12,8 @@ class InstitutionalEmailVerificationPrototype:
 
     def accepts(self, email: str) -> bool:
         domain = email.rsplit("@", 1)[-1].lower()
-        return domain == settings.institutional_email_domain.lower()
+        institutional_domain = settings.institutional_email_domain.strip().lower()
+        return domain == institutional_domain or domain.endswith(f".{institutional_domain}")
 
 
 institutional_verifier = InstitutionalEmailVerificationPrototype()
