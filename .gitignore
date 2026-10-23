@@ -3,6 +3,9 @@
 node_modules/
 *.log
 .env
+.env.local
+.env*.local
+!.env.example
 
 # Python & Cache
 __pycache__/
@@ -15,5 +18,3 @@ __pycache__/
 # Runtime Uploads & Artifacts
 uploads/
 scrub_token.py
-  
- 
