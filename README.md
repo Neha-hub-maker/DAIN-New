@@ -63,6 +63,16 @@ python -m http.server 3000
 
 ---
 
+## Environment setup
+
+Copy the template to a local configuration file:
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in the values you need using the links in the template; `GROQ_MODEL` is already set. Never commit `.env.local` or real API keys. The template documents configuration only; it does not enable API integrations or change how the application loads environment variables.
+
 ## 🏛️ Brand & Governance
 
 Built under the **DUNITE Governance Framework** for Dhaka University.
