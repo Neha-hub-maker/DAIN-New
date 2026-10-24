@@ -29,6 +29,9 @@ function loadRegistration(email) {
     institution: "University of Dhaka",
   };
   const context = vm.createContext({
+    API_BASE: "http://127.0.0.1:8000",
+    pipelineBusy: false,
+    sessionStorage: { removeItem() {}, setItem() {} },
     document: {
       getElementById(id) {
         if (!elements.has(id)) elements.set(id, {
@@ -40,7 +43,7 @@ function loadRegistration(email) {
     },
     async fetch(url, options) {
       requests.push({ url, body: JSON.parse(options.body) });
-      return { ok: true };
+      return { ok: true, async json() { return { access_token: "test-session-token" }; } };
     },
     showToast() {},
     completeAuthSuccess() {},

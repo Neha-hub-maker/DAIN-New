@@ -1,8 +1,20 @@
+# Keep local credentials, virtualenvs and runtime data out of the image.
 .git
-.venv
-__pycache__
 .env
-uploads
-outputs
-work
-tests
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+**/*.py[cod]
+*.db
+*.sqlite3
+*.sqlite3-journal
+.local_cache/
+.pytest_cache/
+uploads/
+outputs/
+work/
+tests/

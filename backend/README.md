@@ -14,13 +14,13 @@ Backend-only implementation for DAIN (DUNITE Achievement & Impact Network). It c
 
 The current DU domain/subdomain check plus one-time token is an **institutional-email verification prototype**. It is not real DUNITE Auth, DUNITE SSO, or OIDC. No DUNITE integration credentials/specification were provided. The prototype boundary is isolated in `app/services/institutional_verification.py`, so an approved DUNITE integration can replace it later.
 
-There is also no email-delivery provider in this MVP. For local testing only, use `DEBUG=true` and `EXPOSE_VERIFICATION_TOKEN_IN_RESPONSE=true`; registration will then return a one-time token. Never enable this in a deployed environment.
+Production registration requires SMTP delivery configured through the host dashboard. For local testing only, use `DEBUG=true` and `EXPOSE_VERIFICATION_TOKEN_IN_RESPONSE=true`; registration will then return a one-time token. Never enable this in a deployed environment. See [DEPLOY.md](../DEPLOY.md) for the deployment sequence and all settings.
 
 ## Windows local setup
 
 ### 1. Install prerequisites
 
-- Python 3.11 or newer: verify with `py --version`
+- Python 3.12 (the deployment pin is 3.12.14): verify with `py --version`
 - PostgreSQL 16 or newer: verify with `psql --version`
 
 ### 2. Create the database
@@ -38,7 +38,7 @@ From PowerShell:
 
 ```powershell
 Set-Location "C:\Users\IT\Documents\Codex\2026-08-25\you-are-my-senior-backend-engineer"
-py -3.11 -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
@@ -169,7 +169,7 @@ The optional achievement verifier uses Groq for claim extraction/assessment and 
 
 Docker is provided for a small demonstration deployment, not production hardening.
 
-1. Put `POSTGRES_PASSWORD` and `INSTITUTIONAL_EMAIL_DOMAIN` in `.env`.
+1. Supply `POSTGRES_PASSWORD` and a matching `DATABASE_URL` in your shell or private configuration outside Git. For Compose use host `db:5432`, database `dain`, and user `dain_user`; URL-encode the password in the URI. Compose runs in development mode with response verification tokens exposed; use the production settings in [DEPLOY.md](../DEPLOY.md) for hosting.
 2. Run:
 
 ```powershell
