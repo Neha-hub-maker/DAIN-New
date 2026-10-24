@@ -1,8 +1,8 @@
 import uuid
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl, field_validator
 
 from app.models.dain import MediaPackageStatus, ReviewDecision, SubmissionStatus, ValidationStatus
 
@@ -68,6 +68,47 @@ class SubmissionCreateRequest(BaseModel):
         if not value.strip():
             raise ValueError("Value must not be blank.")
         return value.strip()
+
+
+class StoryVerificationRequest(BaseModel):
+    """Accept form field names and their service-facing snake_case equivalents."""
+
+    model_config = ConfigDict(populate_by_name=True, str_strip_whitespace=True, extra="forbid")
+
+    headline: str = Field(min_length=10, max_length=120)
+    summary: str = Field(min_length=30, max_length=600)
+    sector: Literal["Academic", "Professional", "Entrepreneurial", "Social Impact", "Personal"] = Field(alias="category")
+    classification: str = Field(alias="subType", min_length=1, max_length=120)
+    institution: str = Field(min_length=1, max_length=200)
+    primary_metric: str = Field(default="", alias="impact", max_length=200)
+    evidence_link: HttpUrl | None = Field(default=None, alias="evidenceLink", max_length=2048)
+    achievement_date: date = Field(alias="achievementDate")
+    author_email: EmailStr = Field(alias="authorEmail", max_length=254)
+
+    @field_validator("evidence_link", mode="before")
+    @classmethod
+    def empty_evidence_link_is_optional(cls, value: Any) -> Any:
+        return None if isinstance(value, str) and not value.strip() else value
+
+
+class StoryVerificationClaimResponse(BaseModel):
+    text: str
+    verdict: Literal["verified", "unverified", "contradicted"]
+    confidence: float = Field(ge=0, le=1, allow_inf_nan=False)
+    sources: list[str]
+
+
+class StoryVerificationStageResponse(BaseModel):
+    id: Literal["identity", "editorial", "routing"]
+    status: Literal["passed", "failed", "held", "skipped"]
+    detail: str
+
+
+class StoryVerificationResponse(BaseModel):
+    status: Literal["verified", "needs_review", "rejected", "verification_pending"]
+    reason: str
+    claims: list[StoryVerificationClaimResponse] = Field(default_factory=list, max_length=4)
+    stages: list[StoryVerificationStageResponse] = Field(min_length=3, max_length=3)
 
 
 class SubmissionUpdateRequest(BaseModel):

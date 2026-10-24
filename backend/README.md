@@ -94,6 +94,7 @@ Open `http://127.0.0.1:8000/docs`. `GET /health` checks the configured PostgreSQ
 | `EXPOSE_VERIFICATION_TOKEN_IN_RESPONSE` | Local-only prototype switch; default `false`. |
 | `MEDIA_ROOT` | Directory for MVP file uploads and generated HTML. |
 | `MAX_UPLOAD_SIZE_BYTES` | Maximum upload size; default 5 MB. |
+| `CORS_ORIGINS` | Comma-separated frontend origins. The launch scripts use `http://localhost:3000`; the example also permits `http://127.0.0.1:3000`. |
 
 ## API summary
 
@@ -108,6 +109,7 @@ Open `http://127.0.0.1:8000/docs`. `GET /health` checks the configured PostgreSQ
 | GET | `/categories` | Verified Bearer | Fetch active dynamic-form categories and fields. |
 | POST | `/categories` | Admin | Create a category and its dynamic fields. |
 | POST | `/submissions` | Verified Bearer | Create a draft. |
+| POST | `/submissions/verify` | Verified Bearer | Verify a story form and return identity, editorial, and routing stages. |
 | GET | `/submissions` | Verified Bearer | List own submissions; editors/admins see all. |
 | GET | `/submissions/{id}` | Owner/editor/admin | Read a submission. |
 | POST | `/submissions/{id}/links` | Draft owner | Add a supporting URL. |
@@ -122,6 +124,32 @@ Open `http://127.0.0.1:8000/docs`. `GET /health` checks the configured PostgreSQ
 
 The interactive OpenAPI page at `/docs` shows the exact request and response shapes.
 
+### Story verification
+
+`POST /submissions/verify` takes the token returned by `/auth/login` in `Authorization: Bearer <token>`. The author email must pass the existing configured DU domain/subdomain check and match the verified account. Identity failures return `rejected`, with editorial/routing skipped and no paid verification call. The endpoint checks a form draft without saving or publishing it.
+
+Use the form's JSON field names, or the corresponding snake_case service names:
+
+| Form field | Service name | Limits |
+|---|---|---|
+| `headline` | `headline` | 10–120 characters |
+| `summary` | `summary` | 30–600 characters |
+| `category` | `sector` | Academic, Professional, Entrepreneurial, Social Impact, or Personal |
+| `subType` | `classification` | 1–120 characters |
+| `institution` | `institution` | 1–200 characters |
+| `impact` | `primary_metric` | Optional, up to 200 characters |
+| `evidenceLink` | `evidence_link` | Optional HTTP(S) URL, up to 2048 characters; empty is accepted |
+| `achievementDate` | `achievement_date` | Required ISO date (`YYYY-MM-DD`) |
+| `authorEmail` | `author_email` | Valid email, up to 254 characters |
+
+Headline and summary limits match the HTML form. Other text fields have server-side caps because the current form does not declare `maxlength` for them. The author email is used locally and is excluded from the fields passed to Groq/Tavily.
+
+The response always has `status`, `reason`, `claims`, and three `stages`, in identity/editorial/routing order. Each claim has `text`, `verdict`, `confidence`, and `sources`; each stage has `id`, `status`, and `detail`. Editorial is `passed` for verified content, `failed` for rejected content, and `held` for needs-review or pending results. Routing is `passed` only when verified; it means ready for routing, without performing distribution.
+
+Authenticated requests with a valid body are limited to five per IP in a sliding 60-second window. Excess requests return HTTP 429 and `Retry-After` before paid calls. Client forwarding headers do not select the IP; configure trusted proxy handling at the server when deploying behind a proxy. The simple limiter is process-local and resets on restart. Multiple workers/replicas would need a shared limiter for a global quota.
+
+Both `Launch_DAIN_Platform.bat` and `Launch_FullStack.bat` start Python's static server on port 3000 and open `http://localhost:3000/index.html`. `Launch_DAIN_Dev.bat` launches development tools only. Use the HTTP URL for development: opening the HTML directly produces the unsupported `null` origin. `backend/.env.example` lists the supported development origins; the default configuration has no CORS wildcard. No real `.env` is needed for route tests.
+
 ## Security notes
 
 - Passwords use Argon2 hashes; plaintext passwords are never persisted or returned.
@@ -135,7 +163,7 @@ The interactive OpenAPI page at `/docs` shows the exact request and response sha
 
 Validation checks required dynamic fields and detects likely duplicate titles using normalized-text similarity. Results are stored and flagged for human review; they do not automatically reject or block a story.
 
-No LLM, Hugging Face, or external AI API is implemented. The probationary task makes AI integrations optional (“if you plan to use LLMs”), so no external AI keys or unreliable AI dependency were added.
+The optional achievement verifier uses Groq for claim extraction/assessment and Tavily for search and evidence-link extraction. `GROQ_API_KEY` and `TAVILY_API_KEY` default to empty strings; missing keys yield `verification_pending`. `GROQ_MODEL` defaults to `openai/gpt-oss-120b`. Provider errors and the overall 25-second timeout also yield a pending result. Route tests mock the verifier, and service tests mock HTTP; neither needs real credentials or network access.
 
 ## Docker deployment
 
