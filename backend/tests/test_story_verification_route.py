@@ -1,6 +1,7 @@
 """Story verification contracts with the paid service mocked throughout."""
 
 import asyncio
+import importlib.util
 from datetime import date
 from pathlib import Path
 from unittest.mock import AsyncMock
@@ -261,6 +262,24 @@ def test_optional_form_fields_accept_empty_strings(client, auth_headers, mocked_
     assert response.status_code == 200
     assert mocked_verifier.call_args.kwargs["evidence_link"] is None
     assert mocked_verifier.call_args.kwargs["primary_metric"] == ""
+
+
+def test_smoke_script_payload_is_rejected_without_provider_calls(client, auth_headers, monkeypatch):
+    path = Path(__file__).resolve().parents[2] / "scripts" / "smoke_test.py"
+    spec = importlib.util.spec_from_file_location("dain_smoke_script", path)
+    smoke_script = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(smoke_script)
+    no_network = AsyncMock(side_effect=AssertionError("Gibberish must never call providers"))
+    monkeypatch.setattr(httpx.AsyncClient, "send", no_network)
+    monkeypatch.setattr(dain, "story_verification_limiter", IPRateLimiter())
+
+    response = client.post(ENDPOINT, headers=auth_headers, json=smoke_script.gibberish_payload(EMAIL))
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "rejected"
+    assert response.json()["reason"] == "insufficient_content"
+    assert response.json()["stages"][0]["status"] == "passed"
+    no_network.assert_not_awaited()
 
 
 def test_exact_form_length_limits_are_accepted(client, auth_headers, mocked_verifier):

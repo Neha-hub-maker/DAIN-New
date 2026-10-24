@@ -74,6 +74,27 @@ URL and the host dashboard contains the frontend origin and proxy trust setting.
 
 ## Post-deploy smoke tests
 
+Run the standard-library connectivity script from the repository root:
+
+```text
+python scripts/smoke_test.py <backend_url> <frontend_origin>
+```
+
+Use the backend's public HTTP(S) base URL and the frontend's origin without a
+repository path. Set `DAIN_SMOKE_TOKEN` to an existing verified user's login
+session token and `DAIN_SMOKE_EMAIL` to that account's email in the process
+environment before running; no environment file or Groq/Tavily keys are needed.
+Do not put a token in the command arguments or commit it. With missing auth,
+health/CORS still run and the third check reports FAIL with setup instructions.
+
+The script prints PASS/FAIL for health (HTTP 200), the JSON/Bearer OPTIONS
+preflight's exact allowed origin, and authenticated gibberish rejection. It exits
+nonzero on any failure and never prints credentials, response bodies or raw
+network exceptions. Redirects are refused to avoid forwarding a session token.
+The gibberish check requires reason `insufficient_content`, so an identity
+rejection cannot falsely pass. It uses no Groq/Tavily credits, but counts as one
+request against the five-per-minute verification limit.
+
 These are operator steps; they were **not run against live providers** for this PR.
 The two real-story tests spend provider credits. Use `/docs` to register a DU
 account, complete `/auth/verify-email` with the code received by email, log in,
@@ -107,3 +128,17 @@ does not complete email verification; use the API flow above for authenticated
 smoke tests. Do not treat this deployment configuration as completion of those
 product workflows. The API verification limiter is process-local; keep one worker
 and instance until a shared limiter is added for scaling.
+
+## Offline regression checks
+
+```bash
+python -m unittest discover -s tests -p 'test_smoke_test.py'
+node --test tests/*.test.cjs
+node --test tests/verification.browser.cjs
+```
+
+The browser suite uses Playwright and Chromium, which must already be installed
+in the test environment. It uses a system `/usr/bin/chromium` when available,
+otherwise Playwright's installed Chromium; `DAIN_CHROMIUM_PATH` can select another
+browser executable. Every HTTP request is intercepted, including assets, health
+and verification requests. Smoke-script tests mock HTTP and prohibit sockets.
