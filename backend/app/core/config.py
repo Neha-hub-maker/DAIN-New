@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     institutional_email_domain: str = "du.ac.bd"
     app_env: str = "development"
     debug: bool = True
+
+    groq_api_key: str = ""
+    groq_model: str = "openai/gpt-oss-120b"
+    tavily_api_key: str = ""
     
     smtp_host: str | None = None
     smtp_port: int = 587
