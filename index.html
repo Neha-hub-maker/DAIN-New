@@ -1094,6 +1094,7 @@
 
         <!-- View 2: Submission Studio (3-Step Wizard) -->
         <section id="view-submit" class="view-panel space-y-6">
+          <p id="verification-health-banner" hidden role="status" class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-800"></p>
           <!-- Wizard Stepper Indicators -->
           <div class="bg-white border border-border-light rounded-3xl p-5 flex justify-between items-center max-w-xl mx-auto shadow-apple">
             <div class="flex items-center gap-2">
@@ -1571,6 +1572,7 @@
       let wizardStep = 1;
       let toastTimeout = null;
       let pipelineBusy = false;
+      let healthCheckController = null;
 
       // Fast Skeleton Shimmer Transition (Perceived Speed)
       function triggerSkeletonTransition(callback) {
@@ -1957,6 +1959,7 @@
         document.getElementById("sidebar-scrim").classList.add("hidden");
         window.scrollTo({ top: 0, behavior: "smooth" });
 
+        if (viewName === "submit") checkVerificationHealth();
         if (viewName === "home") renderHomeFeatured();
         if (viewName === "stories") renderStoriesDirectory("All");
         if (viewName === "academic") renderSectorGrid("Academic", "academic-stories-grid");
@@ -2035,9 +2038,10 @@
           return '<div class="verification-summary"><h4>Verification results</h4><p class="verification-reason">No verification result is available for this story.</p></div>';
         }
         const claims = Array.isArray(verification.claims) ? verification.claims.filter(claim => claim && typeof claim === "object") : [];
+        const failureMessage = typeof verification.failureMessage === "string" ? verification.failureMessage : "";
         return `<div class="verification-summary">
           <h4>Verification results</h4>
-          <p class="verification-reason"><strong>Overall reason:</strong> ${escapeHTML(verification.reason || "No reason provided.")}</p>
+          <p class="verification-reason"><strong>Overall reason:</strong> ${escapeHTML(failureMessage || verification.reason || "No reason provided.")}</p>
           ${claims.length ? `<ol class="verification-claims">${claims.map(claim => {
             const [label, badgeClass] = claimPresentation(claim.verdict);
             const confidence = Number.isFinite(claim.confidence) && claim.confidence >= 0 && claim.confidence <= 1 ? `${Math.round(claim.confidence * 100)}%` : "Not available";
@@ -2047,7 +2051,7 @@
               <p>${escapeHTML(claim.text)}</p>
               <div class="verification-sources">${sources.length ? sources.map(url => `<a href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(url)}</a>`).join("") : '<span>No eligible source links.</span>'}</div>
             </li>`;
-          }).join("")}</ol>` : '<p class="verification-reason">No checkable claims were returned.</p>'}
+          }).join("")}</ol>` : failureMessage ? '<p class="verification-reason">Held for editorial review and not published until approved.</p>' : '<p class="verification-reason">No checkable claims were returned.</p>'}
         </div>`;
       }
 
@@ -2276,9 +2280,35 @@
         }
       }
 
-      function pendingVerification(reason, detail) {
+      async function checkVerificationHealth() {
+        healthCheckController?.abort();
+        const controller = new AbortController();
+        healthCheckController = controller;
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const banner = document.getElementById("verification-health-banner");
+        try {
+          const response = await fetch(`${API_BASE}/health`, { signal: controller.signal, cache: "no-store" });
+          if (healthCheckController !== controller) return;
+          banner.hidden = response.ok;
+          if (!response.ok) {
+            banner.textContent = `Verification server unreachable at ${API_BASE}`;
+            console.warn("DAIN health check failed", { kind: "http_error", status: response.status });
+          }
+        } catch (error) {
+          if (healthCheckController !== controller) return;
+          banner.textContent = `Verification server unreachable at ${API_BASE}`;
+          banner.hidden = false;
+          console.warn("DAIN health check failed", { kind: controller.signal.aborted ? "timeout" : "network_or_cors" });
+        } finally {
+          clearTimeout(timeout);
+          if (healthCheckController === controller) healthCheckController = null;
+        }
+      }
+
+      function pendingVerification(reason, detail, failureMessage) {
         return {
           status: "verification_pending", reason, claims: [],
+          ...(failureMessage ? { failureMessage } : {}),
           stages: stageIds.map(id => ({ id, status: id === "routing" ? "skipped" : "held", detail: id === "routing" ? "Not published. Verification is required before routing." : detail }))
         };
       }
@@ -2311,16 +2341,27 @@
           });
           if (!response.ok) {
             const reason = { 401: "authentication_required", 403: "authorization_failed", 429: "rate_limited", 422: "invalid_submission" }[response.status] || "verification_request_failed";
-            return pendingVerification(reason, `Verification request returned HTTP ${response.status}. Editorial review is required.`);
+            const message = `Server returned ${response.status}`;
+            console.warn("DAIN verification request failed", { kind: "http_error", status: response.status });
+            return pendingVerification(reason, `${message}. Editorial review is required.`, message);
           }
           let result;
           try { result = await response.json(); } catch (error) {
-            return pendingVerification("invalid_response", "No valid verification result was received. Editorial review is required.");
+            if (controller.signal.aborted || error?.name === "AbortError" || !(error instanceof SyntaxError)) throw error;
+            console.warn("DAIN verification request failed", { kind: "invalid_json", status: response.status });
+            return pendingVerification("invalid_response", "No valid verification result was received. Editorial review is required.", "The verification server returned an invalid response");
           }
-          return isVerificationResponse(result) ? result : pendingVerification("invalid_response", "No valid verification result was received. Editorial review is required.");
+          if (isVerificationResponse(result)) return result;
+          console.warn("DAIN verification request failed", { kind: "invalid_response", status: response.status });
+          return pendingVerification("invalid_response", "No valid verification result was received. Editorial review is required.", "The verification server returned an invalid response");
         } catch (error) {
-          const timedOut = controller.signal.aborted || error.name === "AbortError";
-          return pendingVerification(timedOut ? "verification_timeout" : "backend_unreachable", timedOut ? "Verification timed out after 40 seconds. Editorial review is required." : "Verification could not be completed. Editorial review is required.");
+          const timedOut = controller.signal.aborted || error?.name === "AbortError";
+          const message = timedOut ? "The verification server took too long" : "Could not reach the verification server (network or CORS)";
+          console.warn("DAIN verification request failed", {
+            kind: timedOut ? "timeout" : "network_or_cors", timeoutMs: 40000,
+            errorType: error instanceof TypeError ? "TypeError" : error?.name === "AbortError" ? "AbortError" : "Error"
+          });
+          return pendingVerification(timedOut ? "verification_timeout" : "backend_unreachable", `${message}. Editorial review is required.`, message);
         } finally {
           clearTimeout(timeout);
         }
