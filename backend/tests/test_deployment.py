@@ -36,17 +36,18 @@ def test_local_sqlite_url_is_preserved():
     assert config.database_url == "sqlite+pysqlite:///:memory:"
 
 
-def test_comma_separated_production_cors_from_environment(monkeypatch):
-    monkeypatch.setenv(
-        "CORS_ORIGINS",
-        " https://dain.example.test, ,https://studio.example.test:8443, ",
-    )
+@pytest.mark.parametrize("raw,expected", [
+    ("", []),
+    (" , , /// , ", []),
+    (" https://dain.example.test/// ", ["https://dain.example.test"]),
+    (" https://dain.example.test/ , ,https://studio.example.test:8443///, ",
+     ["https://dain.example.test", "https://studio.example.test:8443"]),
+])
+def test_comma_separated_production_cors_from_environment(monkeypatch, raw, expected):
+    monkeypatch.setenv("CORS_ORIGINS", raw)
     config = Settings(_env_file=None)
 
-    assert config.cors_origin_list == [
-        "https://dain.example.test",
-        "https://studio.example.test:8443",
-    ]
+    assert config.cors_origin_list == expected
 
 
 def test_production_cors_preflight_allows_only_configured_origins():
@@ -69,7 +70,13 @@ for origin in ["https://dain.example.test", "https://studio.example.test:8443", 
         "Access-Control-Request-Method": "POST",
         "Access-Control-Request-Headers": "Authorization, Content-Type",
     })
+    if response.status_code == 200:
+        assert {"POST", "OPTIONS"} <= set(response.headers["access-control-allow-methods"].split(", "))
+        assert {"authorization", "content-type"} <= set(response.headers["access-control-allow-headers"].lower().split(", "))
     results.append([response.status_code, response.headers.get("access-control-allow-origin")])
+response = client.post("/submissions/verify", json={}, headers={"Origin": "https://dain.example.test"})
+assert response.status_code == 401
+assert response.headers["access-control-allow-origin"] == "https://dain.example.test"
 print(json.dumps(results))
 """
     result = subprocess.run(
@@ -79,7 +86,7 @@ print(json.dumps(results))
             **os.environ,
             "DATABASE_URL": "sqlite+pysqlite:///:memory:",
             "DEBUG": "false",
-            "CORS_ORIGINS": " https://dain.example.test, ,https://studio.example.test:8443, ",
+            "CORS_ORIGINS": " https://dain.example.test///, ,https://studio.example.test:8443/, ",
         },
         check=True,
         capture_output=True,
@@ -93,30 +100,19 @@ print(json.dumps(results))
     ]
 
 
-def test_health_is_database_only(client, monkeypatch):
-    def no_network(*args, **kwargs):
-        pytest.fail("The health probe must not contact external services.")
+def test_health_does_not_touch_database_or_providers(client, monkeypatch):
+    def no_dependencies(*args, **kwargs):
+        pytest.fail("The health probe must not contact the database or providers.")
 
-    monkeypatch.setattr(socket, "create_connection", no_network)
-    monkeypatch.setattr(httpx.AsyncClient, "send", no_network)
+    monkeypatch.setattr(socket, "create_connection", no_dependencies)
+    monkeypatch.setattr(httpx.AsyncClient, "send", no_dependencies)
+    monkeypatch.setattr("app.db.session.engine.connect", no_dependencies)
+    monkeypatch.setattr("app.db.session.check_database_connection", no_dependencies)
 
     response = client.get("/health")
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "environment": "test"}
-
-
-def test_health_fails_when_database_is_unavailable(client, monkeypatch):
-    from fastapi.testclient import TestClient
-
-    def unavailable():
-        raise RuntimeError("Synthetic database outage")
-
-    monkeypatch.setattr("app.main.check_database_connection", unavailable)
-    # Reuse the client's application lifespan; only disable exception propagation.
-    response = TestClient(app, raise_server_exceptions=False).get("/health")
-
-    assert response.status_code == 500
 
 
 def test_migrations_and_seed_are_repeatable_from_repo_root(tmp_path):

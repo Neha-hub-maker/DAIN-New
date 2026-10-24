@@ -3,7 +3,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.db.session import check_database_connection
 from app.routes.auth import router as auth_router
 from app.routes.dain import router as dain_router
 from app.db.base import Base
@@ -56,8 +55,7 @@ def root() -> dict[str, str]:
 
 @app.get("/health", tags=["system"])
 def health_check() -> dict[str, str]:
-    """Report whether the API process and its PostgreSQL connection are available."""
-    check_database_connection()
+    """Report process liveness without database or provider dependencies."""
     return {
         "status": "ok",
         "environment": settings.app_env,

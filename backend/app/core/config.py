@@ -43,7 +43,11 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         """Parse exact frontend origins from the comma-separated host setting."""
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        return [
+            cleaned
+            for origin in self.cors_origins.split(",")
+            if (cleaned := origin.strip().rstrip("/"))
+        ]
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

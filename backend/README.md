@@ -79,7 +79,7 @@ python -m uvicorn app.main:app --reload
 
 From the repository root, run `node --test tests/email-validation.test.cjs` to check frontend email validation across registration, login, and story submission. These checks use Node's built-in test runner and require no npm packages.
 
-Open `http://127.0.0.1:8000/docs`. `GET /health` checks the configured PostgreSQL connection.
+Open `http://127.0.0.1:8000/docs`. `GET /health` reports process liveness without database or provider calls; database connectivity is required by deployment migrations and authenticated API operations.
 
 ## Environment variables
 
@@ -146,7 +146,7 @@ Headline and summary limits match the HTML form. Other text fields have server-s
 
 The response always has `status`, `reason`, `claims`, and three `stages`, in identity/editorial/routing order. Each claim has `text`, `verdict`, `confidence`, and `sources`; each stage has `id`, `status`, and `detail`. Editorial is `passed` for verified content, `failed` for rejected content, and `held` for needs-review or pending results. Routing is `passed` only when verified; it means ready for routing, without performing distribution.
 
-Authenticated requests with a valid body are limited to five per IP in a sliding 60-second window. Excess requests return HTTP 429 and `Retry-After` before paid calls. Client forwarding headers do not select the IP; configure trusted proxy handling at the server when deploying behind a proxy. The simple limiter is process-local and resets on restart. Multiple workers/replicas would need a shared limiter for a global quota.
+Authenticated requests with a valid body are limited to five per IP in a sliding 60-second window. Excess requests return HTTP 429 and `Retry-After` before paid calls. Uvicorn resolves `X-Forwarded-For` only from the ingress proxy addresses configured in `FORWARDED_ALLOW_IPS`; the route uses that ASGI client address and never parses raw caller headers. See [DEPLOY.md](../DEPLOY.md) for the trust boundary and startup settings. The simple limiter is process-local and resets on restart. Multiple workers/replicas would need a shared limiter for a global quota.
 
 Both `Launch_DAIN_Platform.bat` and `Launch_FullStack.bat` start Python's static server on port 3000 and open `http://localhost:3000/index.html`. `Launch_DAIN_Dev.bat` launches development tools only. Use the HTTP URL for development: opening the HTML directly produces the unsupported `null` origin. `backend/.env.example` lists the supported development origins; the default configuration has no CORS wildcard. No real `.env` is needed for route tests.
 
