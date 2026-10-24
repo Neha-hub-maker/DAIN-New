@@ -4,7 +4,7 @@ import uuid
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse, HTMLResponse
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session, selectinload
@@ -43,12 +43,19 @@ from app.schemas.dain import (
     SubmissionUpdateRequest,
     SubmissionResponse,
     SubmissionValidationResponse,
+    StoryVerificationRequest,
+    StoryVerificationResponse,
+    StoryVerificationStageResponse,
     ValidationResultResponse,
 )
+from app.services import achievement_verification
+from app.services.institutional_verification import institutional_verifier
 from app.services.media import media_root, render_media_package, save_upload
+from app.services.rate_limit import IPRateLimiter
 from app.services.validation import detect_duplicates, validate_completeness
 
 router = APIRouter(tags=["dain"])
+story_verification_limiter = IPRateLimiter()
 
 
 def _audit(
@@ -211,6 +218,68 @@ def _submission_category(
         )
 
     return category
+
+
+@router.post(
+    "/submissions/verify",
+    response_model=StoryVerificationResponse,
+    responses={429: {"description": "Per-IP verification rate limit exceeded."}},
+)
+async def verify_story(
+    payload: StoryVerificationRequest,
+    request: Request,
+    current_user: User = Depends(get_current_verified_user),
+) -> StoryVerificationResponse:
+    """Check a form draft without saving, publishing, or routing the story."""
+    # Rely on the ASGI peer address, not spoofable forwarding headers from callers.
+    story_verification_limiter.check(request.client.host if request.client else "unknown")
+
+    author_email = str(payload.author_email).lower()
+    identity_reason = None
+    if not institutional_verifier.accepts(author_email):
+        identity_reason = "invalid_institutional_email"
+    elif author_email != current_user.email.lower():
+        identity_reason = "author_email_mismatch"
+    if identity_reason:
+        return StoryVerificationResponse(
+            status="rejected",
+            reason=identity_reason,
+            stages=[
+                StoryVerificationStageResponse(id="identity", status="failed", detail="Use your authenticated DU email address."),
+                StoryVerificationStageResponse(id="editorial", status="skipped", detail="Identity must pass before editorial verification."),
+                StoryVerificationStageResponse(id="routing", status="skipped", detail="Routing requires verified content."),
+            ],
+        )
+
+    # Explicitly select story fields; author_email never reaches either provider.
+    result = await achievement_verification.verify_achievement(
+        headline=payload.headline,
+        summary=payload.summary,
+        sector=payload.sector,
+        classification=payload.classification,
+        institution=payload.institution,
+        primary_metric=payload.primary_metric,
+        evidence_link=str(payload.evidence_link) if payload.evidence_link else None,
+        achievement_date=payload.achievement_date,
+    )
+    editorial_status, editorial_detail = {
+        "verified": ("passed", "Claims passed evidence verification."),
+        "rejected": ("failed", "Content or claims did not pass verification."),
+        "needs_review": ("held", "Available evidence needs human review."),
+        "verification_pending": ("held", "Verification is pending; try again later."),
+    }[result["status"]]
+    verified = result["status"] == "verified"
+    return StoryVerificationResponse(
+        **result,
+        stages=[
+            StoryVerificationStageResponse(id="identity", status="passed", detail="Authenticated DU author email accepted."),
+            StoryVerificationStageResponse(id="editorial", status=editorial_status, detail=editorial_detail),
+            StoryVerificationStageResponse(
+                id="routing", status="passed" if verified else "skipped",
+                detail="Ready for media routing." if verified else "Routing requires verified content.",
+            ),
+        ],
+    )
 
 
 @router.post(
