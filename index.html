@@ -273,6 +273,17 @@
       border-color: #B8860B;
       background: rgba(184, 134, 11, 0.1);
     }
+    .validation-stage.failed { border-color: #BE0000; background: #FFF1F2; }
+    .validation-stage.failed .stage-node { color: #BE0000; border-color: #BE0000; background: #FFE4E6; }
+    .validation-stage.failed .stage-status, .validation-stage.failed .stage-result { color: #BE0000; }
+    .validation-stage.held { border-color: #D97706; background: #FFFBEB; }
+    .validation-stage.held .stage-node { color: #B45309; border-color: #D97706; background: #FEF3C7; }
+    .validation-stage.held .stage-status, .validation-stage.held .stage-result { color: #B45309; }
+    .validation-stage.skipped { border-color: #CBD5E1; background: #F1F3F7; }
+    .validation-stage.skipped .stage-node { color: #64748B; border-color: #CBD5E1; background: #E5E8EE; }
+    .validation-stage.skipped .stage-status, .validation-stage.skipped .stage-result { color: #64748B; }
+    .validation-stage.complete .stage-status, .validation-stage.complete .stage-result { color: #B8860B; }
+    button:disabled { cursor: wait; opacity: 0.6; }
 
     .validation-connector {
       position: relative;
@@ -300,6 +311,9 @@
     .validation-connector.complete::before {
       background: rgba(184, 134, 11, 0.5);
     }
+    .validation-connector.failed::before { background: #BE0000; }
+    .validation-connector.held::before { background: #D97706; }
+    .validation-connector.skipped::before { background: #CBD5E1; }
     @keyframes connectorFlow { to { left: 100%; } }
 
     /* Badges & Chips */
@@ -1177,7 +1191,7 @@
             </form>
           </div>
 
-          <!-- 3-Stage Live Simulation Engine -->
+          <!-- Real Verification Results and Optional Simulation -->
           <div id="validation-section" class="bg-white border border-border-light rounded-3xl p-6 space-y-4 shadow-apple">
             <div class="flex items-center justify-between">
               <div>
@@ -1186,7 +1200,7 @@
               </div>
               <button id="run-simulation-btn" type="button" class="px-3.5 py-1.5 border border-academic-gold text-academic-gold hover:bg-amber-50 rounded-xl text-xs font-mono font-semibold flex items-center gap-1.5 apple-tap">
                 <span class="material-symbols-outlined text-sm">play_arrow</span>
-                <span>Demo Run</span>
+                <span>Demo Run (simulation)</span>
               </button>
             </div>
 
@@ -1228,7 +1242,7 @@
               </div>
             </div>
 
-            <div id="pipeline-log" class="bg-surface-subtle border border-border-light rounded-2xl p-2.5 font-mono text-[11px] text-on-surface-variant">
+            <div id="pipeline-log" role="log" aria-live="polite" class="bg-surface-subtle border border-border-light rounded-2xl p-2.5 font-mono text-[11px] text-on-surface-variant">
               SYSTEM • Pipeline standing by for story submission...
             </div>
           </div>
@@ -1412,6 +1426,8 @@
     (() => {
       "use strict";
 
+      const API_BASE = "http://127.0.0.1:8000";
+
       const seedStories = [
         {
           id: "DAIN-2026-01",
@@ -1514,6 +1530,7 @@
       let stories = JSON.parse(localStorage.getItem("dain_stories")) || seedStories;
       let wizardStep = 1;
       let toastTimeout = null;
+      let pipelineBusy = false;
 
       // Fast Skeleton Shimmer Transition (Perceived Speed)
       function triggerSkeletonTransition(callback) {
@@ -1735,6 +1752,7 @@
       }
 
       window.handleSignOut = function() {
+        sessionStorage.removeItem("dain_api_session");
         localStorage.removeItem("dain_user");
         currentUser = {
           name: "Guest Contributor",
@@ -1760,12 +1778,17 @@
         }
 
         try {
-          const res = await fetch("http://127.0.0.1:8000/auth/login", {
+          sessionStorage.removeItem("dain_api_session");
+          const res = await fetch(`${API_BASE}/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password })
           });
           if (res.ok) {
+            const data = await res.json();
+            if (typeof data.access_token === "string" && data.access_token) {
+              sessionStorage.setItem("dain_api_session", JSON.stringify({ email, token: data.access_token }));
+            }
             showToast("FastAPI Server: Logged in successfully!", "verified");
           }
         } catch (err) {}
@@ -1794,7 +1817,8 @@
         }
 
         try {
-          await fetch("http://127.0.0.1:8000/auth/register", {
+          sessionStorage.removeItem("dain_api_session");
+          await fetch(`${API_BASE}/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password, full_name: name })
@@ -1812,6 +1836,7 @@
       };
 
       window.loginAsDemo = function(roleType) {
+        sessionStorage.removeItem("dain_api_session");
         const demos = {
           student: {
             name: "Tanvir Rahman",
@@ -2003,7 +2028,7 @@
       function renderSectorGrid(sector, id) {
         const c = document.getElementById(id);
         if (c) {
-          const f = stories.filter(s => s.category.toLowerCase() === sector.toLowerCase());
+          const f = stories.filter(s => s.status === "Approved" && s.category.toLowerCase() === sector.toLowerCase());
           c.innerHTML = f.length ? f.map(renderStoryCardHTML).join("") : `<p class="col-span-3 text-center py-12 text-on-surface-variant font-mono text-xs">No stories yet in this sector.</p>`;
         }
       }
@@ -2054,13 +2079,13 @@
           body.innerHTML = `
             <div class="p-4 rounded-2xl bg-surface-subtle border border-border-light space-y-2">
               <div class="flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
-                <span class="text-dunite-red font-bold uppercase">FOR IMMEDIATE RELEASE</span>
+                <span class="text-dunite-red font-bold uppercase">${story.status === "Approved" ? "FOR IMMEDIATE RELEASE" : "EDITORIAL REVIEW ONLY"}</span>
                 <span>${story.date}</span>
               </div>
               <h2 class="font-display text-lg font-bold text-on-surface">${story.headline}</h2>
               <div class="flex flex-wrap gap-2 text-xs font-mono pt-1">
                 <span class="px-2.5 py-0.5 rounded-full bg-white border border-border-light text-academic-gold font-semibold">${story.category}</span>
-                <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-academic-gold border border-academic-gold/30 font-semibold">&check; DU Verified</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-academic-gold border border-academic-gold/30 font-semibold">${story.status === "Approved" ? "&check; DU Verified" : story.status}</span>
               </div>
             </div>
             <div class="p-4 rounded-2xl bg-amber-50/50 border border-academic-gold/30 space-y-2">
@@ -2087,6 +2112,129 @@
       // Wizard Controls
       const btnNext = document.getElementById("btn-wizard-next");
       const btnBack = document.getElementById("btn-wizard-back");
+      const simulationBtn = document.getElementById("run-simulation-btn");
+      const stageIds = ["identity", "editorial", "routing"];
+      const stageNames = { identity: "Identity & Auth", editorial: "Editorial & Fact", routing: "Media Routing" };
+      const stageStyles = {
+        passed: ["complete", "Passed", "check_circle"],
+        failed: ["failed", "Failed", "cancel"],
+        held: ["held", "Held", "pause_circle"],
+        skipped: ["skipped", "Skipped", "skip_next"]
+      };
+
+      function appendPipelineLog(message) {
+        const line = document.createElement("div");
+        line.textContent = message;
+        document.getElementById("pipeline-log").appendChild(line);
+      }
+
+      function resetPipeline(message) {
+        stageIds.forEach((_id, index) => {
+          const card = document.getElementById(`validation-stage-${index}`);
+          card.classList.remove("active", "complete", "failed", "held", "skipped");
+          card.querySelector(".stage-status").textContent = "Waiting";
+          const icon = card.querySelector(".stage-result");
+          icon.textContent = "schedule";
+          icon.className = "stage-result material-symbols-outlined text-on-surface-variant text-sm";
+          if (index < 2) document.getElementById(`validation-connector-${index}`).classList.remove("active", "complete", "failed", "held", "skipped");
+        });
+        document.getElementById("pipeline-log").textContent = "";
+        appendPipelineLog(message);
+      }
+
+      async function animatePipeline(stages, prefix = "VERIFICATION") {
+        for (let index = 0; index < stageIds.length; index++) {
+          const stage = stages.find(item => item.id === stageIds[index]);
+          const card = document.getElementById(`validation-stage-${index}`);
+          const [state, label, icon] = stageStyles[stage.status];
+          card.classList.add("active");
+          card.querySelector(".stage-status").textContent = stage.status === "skipped" ? "Not run" : "Checking…";
+          await new Promise(resolve => setTimeout(resolve, 240));
+          card.classList.remove("active");
+          card.classList.add(state);
+          card.querySelector(".stage-status").textContent = label;
+          card.querySelector(".stage-result").textContent = icon;
+          appendPipelineLog(`${prefix} • ${stageNames[stage.id]} • ${label}: ${stage.detail}`);
+          if (index < 2) {
+            const connector = document.getElementById(`validation-connector-${index}`);
+            if (stage.status === "passed" && stages.find(item => item.id === stageIds[index + 1]).status !== "skipped") {
+              connector.classList.add("active");
+              await new Promise(resolve => setTimeout(resolve, 180));
+              connector.classList.remove("active");
+            }
+            connector.classList.add(state);
+          }
+        }
+      }
+
+      function pendingVerification(reason, detail) {
+        return {
+          status: "verification_pending", reason, claims: [],
+          stages: stageIds.map(id => ({ id, status: id === "routing" ? "skipped" : "held", detail: id === "routing" ? "Not published. Verification is required before routing." : detail }))
+        };
+      }
+
+      function isVerificationResponse(result) {
+        return result && ["verified", "needs_review", "rejected", "verification_pending"].includes(result.status)
+          && typeof result.reason === "string" && Array.isArray(result.claims)
+          && result.claims.every(claim => claim && typeof claim.text === "string"
+            && ["verified", "unverified", "contradicted"].includes(claim.verdict)
+            && Number.isFinite(claim.confidence) && claim.confidence >= 0 && claim.confidence <= 1
+            && Array.isArray(claim.sources) && claim.sources.every(source => typeof source === "string"))
+          && Array.isArray(result.stages) && result.stages.length === 3
+          && stageIds.every(id => result.stages.filter(stage => stage && stage.id === id).length === 1)
+          && result.stages.every(stage => Object.hasOwn(stageStyles, stage.status) && typeof stage.detail === "string")
+          && (result.status !== "verified" || result.stages.every(stage => stage.status === "passed"));
+      }
+
+      async function requestStoryVerification(payload) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 40000);
+        try {
+          const headers = { "Content-Type": "application/json" };
+          let session = null;
+          try { session = JSON.parse(sessionStorage.getItem("dain_api_session") || "null"); } catch (error) {}
+          if (session && typeof session.token === "string" && typeof session.email === "string" && session.email.toLowerCase() === payload.authorEmail.toLowerCase()) {
+            headers.Authorization = `Bearer ${session.token}`;
+          }
+          const response = await fetch(`${API_BASE}/submissions/verify`, {
+            method: "POST", headers, body: JSON.stringify(payload), signal: controller.signal
+          });
+          if (!response.ok) {
+            const reason = { 401: "authentication_required", 403: "authorization_failed", 429: "rate_limited", 422: "invalid_submission" }[response.status] || "verification_request_failed";
+            return pendingVerification(reason, `Verification request returned HTTP ${response.status}. Editorial review is required.`);
+          }
+          let result;
+          try { result = await response.json(); } catch (error) {
+            return pendingVerification("invalid_response", "No valid verification result was received. Editorial review is required.");
+          }
+          return isVerificationResponse(result) ? result : pendingVerification("invalid_response", "No valid verification result was received. Editorial review is required.");
+        } catch (error) {
+          const timedOut = controller.signal.aborted || error.name === "AbortError";
+          return pendingVerification(timedOut ? "verification_timeout" : "backend_unreachable", timedOut ? "Verification timed out after 40 seconds. Editorial review is required." : "Verification could not be completed. Editorial review is required.");
+        } finally {
+          clearTimeout(timeout);
+        }
+      }
+
+      function createStoryId() {
+        let id;
+        do {
+          const random = typeof crypto.randomUUID === "function" ? crypto.randomUUID()
+            : Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, "0")).join("");
+          id = `DAIN-${random}`;
+        } while (stories.some(story => story.id === id));
+        return id;
+      }
+
+      function resetSubmittedForm() {
+        document.getElementById("story-form").reset();
+        document.getElementById("achievement-date").value = new Date().toISOString().slice(0, 10);
+        sessionStorage.removeItem("dain_form_draft");
+        wizardStep = 1;
+        updateWizardUI();
+        updateCounters();
+      }
 
       function updateWizardUI() {
         document.querySelectorAll(".form-step").forEach(step => {
@@ -2100,7 +2248,7 @@
         });
 
         btnBack.classList.toggle("hidden", wizardStep === 1);
-        document.getElementById("wizard-next-label").textContent = wizardStep === 3 ? "Submit for Review" : "Continue";
+        document.getElementById("wizard-next-label").textContent = pipelineBusy ? "Verifying…" : (wizardStep === 3 ? "Submit for Review" : "Continue");
         if (wizardStep === 3) {
           const cat = document.getElementById("category").value;
           const sub = document.getElementById("sub-type").value;
@@ -2128,7 +2276,8 @@
       }
 
       if (btnNext) {
-        btnNext.addEventListener("click", () => {
+        btnNext.addEventListener("click", async () => {
+          if (pipelineBusy) return;
           clearErrorHighlights();
           if (wizardStep === 1) {
             const cat = document.getElementById("category").value;
@@ -2186,35 +2335,67 @@
               showToast("Please check the certification box to authorize syndication.", "error");
               return;
             }
-            const newStory = {
-              id: `DAIN-2026-${String(Date.now()).slice(-3)}`,
+            const form = document.getElementById("story-form");
+            const payload = {
               headline: document.getElementById("headline").value.trim(),
+              summary: document.getElementById("summary").value.trim(),
               category: document.getElementById("category").value,
-              subType: document.getElementById("sub-type").value.trim() || "Milestone",
-              date: document.getElementById("achievement-date").value || new Date().toISOString().slice(0, 10),
-              author: (currentUser && currentUser.name) ? currentUser.name : (document.getElementById("sidebar-user-name")?.textContent || "DU Contributor"),
+              subType: document.getElementById("sub-type").value.trim(),
+              achievementDate: document.getElementById("achievement-date").value,
               authorEmail: document.getElementById("author-email").value.trim(),
               institution: document.getElementById("institution").value.trim(),
-              status: "Approved",
-              reach: Math.floor(Math.random() * 25000) + 12000,
-              impact: document.getElementById("impact").value.trim() || "Verified Milestone",
-              summary: document.getElementById("summary").value.trim(),
-              detailedStory: document.getElementById("summary").value.trim(),
-              evidenceLink: document.getElementById("evidence-link").value.trim() || "https://du.ac.bd"
+              impact: document.getElementById("impact").value.trim(),
+              evidenceLink: document.getElementById("evidence-link").value.trim()
             };
-            stories.unshift(newStory);
-            localStorage.setItem("dain_stories", JSON.stringify(stories));
-            showToast("Story submitted and syndicated to 100+ media outlets!", "verified");
-            document.getElementById("story-form").reset();
-            wizardStep = 1;
+            const disabledStates = Array.from(form.elements, element => [element, element.disabled]);
+            pipelineBusy = true;
+            disabledStates.forEach(([element]) => { element.disabled = true; });
+            simulationBtn.disabled = true;
             updateWizardUI();
-            switchView("stories");
+            resetPipeline("VERIFICATION • Waiting for the backend result…");
+            try {
+              const verification = await requestStoryVerification(payload);
+              appendPipelineLog(`VERIFICATION • ${verification.status}: ${verification.reason}`);
+              await animatePipeline(verification.stages);
+              verification.claims.forEach(claim => appendPipelineLog(`CLAIM • ${claim.verdict} (${Math.round(claim.confidence * 100)}%): ${claim.text}`));
+              const status = verification.status === "verified" ? "Approved" : (verification.status === "rejected" ? "Rejected" : "Pending Review");
+              const newStory = {
+                id: createStoryId(), headline: payload.headline, summary: payload.summary,
+                category: payload.category, subType: payload.subType, date: payload.achievementDate,
+                author: currentUser.name || "DU Contributor", authorEmail: payload.authorEmail,
+                institution: payload.institution, impact: payload.impact, evidenceLink: payload.evidenceLink,
+                detailedStory: payload.summary, status, reach: 0, verification
+              };
+              localStorage.setItem("dain_stories", JSON.stringify([newStory, ...stories]));
+              stories.unshift(newStory);
+              if (status === "Approved") {
+                showToast("Story submitted and syndicated to 100+ media outlets!", "verified");
+                resetSubmittedForm();
+                switchView("stories");
+              } else if (status === "Pending Review") {
+                showToast("Submitted. Held for editorial review and not published until approved.", "pause_circle");
+                resetSubmittedForm();
+                switchView("submit", true);
+              } else {
+                saveFormDraft();
+                showToast(`Rejected: ${verification.reason}. Edit your story and try again.`, "error");
+              }
+            } catch (error) {
+              appendPipelineLog("SAVE ERROR • The story could not be saved. Your form has been kept; please try again.");
+              showToast("Could not save this submission. Your form has been kept; please try again.", "error");
+            } finally {
+              pipelineBusy = false;
+              disabledStates.forEach(([element, disabled]) => { element.disabled = disabled; });
+              simulationBtn.disabled = false;
+              updateWizardUI();
+            }
           }
         });
       }
 
       if (btnBack) {
         btnBack.addEventListener("click", () => {
+          if (pipelineBusy) return;
           wizardStep = Math.max(1, wizardStep - 1);
           updateWizardUI();
         });
@@ -2250,38 +2431,22 @@
         });
       });
 
-      // Simulation Demo in Light Mode
-      document.getElementById("run-simulation-btn")?.addEventListener("click", async () => {
-        const log = document.getElementById("pipeline-log");
-        const stages = [
-          { name: "01: Automated Validation", msg: "Scanning @du.ac.bd identity & duplicates... PASSED" },
-          { name: "02: Editorial Fact Verification", msg: "Checking evidence links and narrative quality... PASSED" },
-          { name: "03: Media Routing Authorization", msg: "Authorizing concentric dispatch across 100+ partner newsrooms... ACTIVATED" }
-        ];
-
-        for (let i = 0; i < 3; i++) {
-          const st = document.getElementById(`validation-stage-${i}`);
-          st.classList.add("active");
-          st.querySelector(".stage-status").textContent = "Checking...";
-          log.textContent = `SYSTEM • Running ${stages[i].name}...`;
-          await new Promise(r => setTimeout(r, 700));
-
-          st.classList.remove("active");
-          st.classList.add("complete");
-          st.querySelector(".stage-status").textContent = "Passed";
-          st.querySelector(".stage-result").textContent = "check_circle";
-          st.querySelector(".stage-result").className = "stage-result material-symbols-outlined text-academic-gold text-sm";
-          log.textContent = `PASS • ${stages[i].msg}`;
-
-          if (i < 2) {
-            const conn = document.getElementById(`validation-connector-${i}`);
-            conn.classList.add("active");
-            await new Promise(r => setTimeout(r, 350));
-            conn.classList.remove("active");
-            conn.classList.add("complete");
-          }
+      // Simulation only: no requests, story creation, or approval.
+      simulationBtn?.addEventListener("click", async () => {
+        if (pipelineBusy) return;
+        pipelineBusy = true;
+        simulationBtn.disabled = true;
+        btnNext.disabled = true;
+        resetPipeline("SIMULATION • Example results only. No story is being submitted or approved.");
+        try {
+          await animatePipeline(stageIds.map(id => ({ id, status: "passed", detail: "Simulated example; no real verification was performed." })), "SIMULATION");
+          showToast("Simulation complete. No story was submitted or approved.", "info");
+        } finally {
+          pipelineBusy = false;
+          simulationBtn.disabled = false;
+          btnNext.disabled = false;
+          updateWizardUI();
         }
-        showToast("Validation demonstration completed successfully!", "verified");
       });
 
       // Rule 18 (Smart Defaults) & Rule 36 (State Persistence) & Rule 39 (Input Validation)
@@ -2350,6 +2515,7 @@
 
       // Rule 38: Destructive Action Protection
       document.getElementById("btn-reset-draft")?.addEventListener("click", () => {
+        if (pipelineBusy) return;
         if (confirm("Are you sure you want to reset and clear your story draft? This action cannot be undone.")) {
           document.getElementById("story-form").reset();
           if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
