@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock
 
 import httpx
 import pytest
+from uvicorn import Config
 
 from app.core.config import Settings
 from app.db.session import SessionLocal
@@ -175,6 +176,61 @@ def test_limits_are_independent_per_ip(client, auth_headers, mocked_verifier):
                 assert (await peer.post(ENDPOINT, headers=auth_headers, json=story_payload())).status_code == 429
     asyncio.run(run())
     assert mocked_verifier.await_count == 10
+
+
+@pytest.mark.parametrize("client_ips", [
+    ("203.0.113.1", "203.0.113.2"),
+    ("2001:db8::1", "2001:db8::2"),
+])
+def test_trusted_proxy_preserves_separate_client_limits(auth_headers, mocked_verifier, monkeypatch, client_ips):
+    monkeypatch.setenv("FORWARDED_ALLOW_IPS", "198.51.100.0/24")
+    config = Config(app, proxy_headers=True, log_config=None)
+    config.load()
+
+    async def run():
+        transport = httpx.ASGITransport(app=config.loaded_app, client=("198.51.100.10", 50000))
+        async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as peer:
+            for address in client_ips:
+                # Include a second trusted proxy in the chain, as hosts may do.
+                headers = {
+                    **auth_headers,
+                    "Origin": "http://localhost:3000",
+                    "X-Forwarded-For": f"{address}, 198.51.100.11",
+                }
+                for _ in range(5):
+                    assert (await peer.post(ENDPOINT, headers=headers, json=story_payload())).status_code == 200
+                limited = await peer.post(ENDPOINT, headers=headers, json=story_payload())
+                assert limited.status_code == 429
+                assert int(limited.headers["Retry-After"]) > 0
+                assert limited.headers["access-control-allow-origin"] == "http://localhost:3000"
+
+    asyncio.run(run())
+    assert mocked_verifier.await_count == 10
+
+
+@pytest.mark.parametrize("peer_ip,forwarded_suffix", [
+    ("203.0.113.50", ""),  # A direct/untrusted peer cannot set its own address.
+    ("198.51.100.10", ", 203.0.113.50, 198.51.100.11"),  # Ignore forged leftmost entries.
+])
+def test_proxy_headers_cannot_rotate_a_callers_rate_limit(auth_headers, mocked_verifier, monkeypatch, peer_ip, forwarded_suffix):
+    monkeypatch.setenv("FORWARDED_ALLOW_IPS", "198.51.100.0/24")
+    config = Config(app, proxy_headers=True, log_config=None)
+    config.load()
+
+    async def run():
+        transport = httpx.ASGITransport(app=config.loaded_app, client=(peer_ip, 50000))
+        async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as peer:
+            for number in range(6):
+                headers = {
+                    **auth_headers,
+                    "X-Forwarded-For": f"192.0.2.{number + 1}{forwarded_suffix}",
+                    "X-Real-IP": f"192.0.2.{number + 1}",
+                }
+                response = await peer.post(ENDPOINT, headers=headers, json=story_payload())
+                assert response.status_code == (200 if number < 5 else 429)
+
+    asyncio.run(run())
+    assert mocked_verifier.await_count == 5
 
 
 @pytest.mark.parametrize("field,size", [("headline", 121), ("summary", 601), ("subType", 121), ("institution", 201), ("impact", 201)])

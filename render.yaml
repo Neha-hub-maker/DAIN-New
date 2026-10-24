@@ -5,7 +5,7 @@ services:
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     # Run migrations on every deploy, including plans without pre-deploy commands.
-    startCommand: python -m alembic upgrade head && python -m app.db.seed && exec python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: python -m alembic upgrade head && python -m app.db.seed && exec python -m uvicorn app.main:app --host 0.0.0.0 --port "$PORT" --proxy-headers --forwarded-allow-ips "${FORWARDED_ALLOW_IPS:?Configure trusted proxy IPs or CIDRs in the dashboard}"
     healthCheckPath: /health
     envVars:
       # psycopg-binary 3.2.3 has no Python 3.14 wheels. Match backend/Dockerfile.
@@ -23,6 +23,9 @@ services:
       - key: POSTGRES_PASSWORD
         sync: false
       - key: CORS_ORIGINS
+        sync: false
+      # Trust only the host ingress proxy IPs/CIDRs; obtain them from the host.
+      - key: FORWARDED_ALLOW_IPS
         sync: false
       - key: INSTITUTIONAL_EMAIL_DOMAIN
         value: du.ac.bd

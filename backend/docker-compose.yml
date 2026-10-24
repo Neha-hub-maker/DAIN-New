@@ -14,6 +14,8 @@ services:
       INSTITUTIONAL_EMAIL_DOMAIN: du.ac.bd
       EXPOSE_VERIFICATION_TOKEN_IN_RESPONSE: "true"
       MEDIA_ROOT: /app/uploads
+      PORT: "${PORT:-8000}"
+      FORWARDED_ALLOW_IPS: "${FORWARDED_ALLOW_IPS:-127.0.0.1}"
       CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}"
       GROQ_API_KEY: "${GROQ_API_KEY:-}"
       GROQ_MODEL: "${GROQ_MODEL:-openai/gpt-oss-120b}"
@@ -25,7 +27,7 @@ services:
       EMAIL_FROM: "${EMAIL_FROM:-}"
       SMTP_USE_SSL: "${SMTP_USE_SSL:-false}"
     ports:
-      - "8000:8000"
+      - "${PORT:-8000}:${PORT:-8000}"
     volumes:
       - media_data:/app/uploads
 

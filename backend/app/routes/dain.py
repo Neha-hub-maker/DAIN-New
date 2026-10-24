@@ -231,7 +231,8 @@ async def verify_story(
     current_user: User = Depends(get_current_verified_user),
 ) -> StoryVerificationResponse:
     """Check a form draft without saving, publishing, or routing the story."""
-    # Rely on the ASGI peer address, not spoofable forwarding headers from callers.
+    # Uvicorn resolves X-Forwarded-For only from configured trusted proxies.
+    # Keep raw header parsing out of the route so direct callers cannot spoof IPs.
     story_verification_limiter.check(request.client.host if request.client else "unknown")
 
     author_email = str(payload.author_email).lower()

@@ -6,7 +6,8 @@ in Git, HTML, or a committed environment file. Configure secrets in the host das
 
 ## Dashboard settings
 
-`render.yaml` declares every variable in `backend/.env.example`. Entries with
+`render.yaml` declares the template variables except `PORT`, which Render supplies
+automatically. Entries with
 `sync: false` must be supplied through the dashboard; secret values are never in
 the Blueprint. The safe defaults below are already declared in the Blueprint.
 
@@ -15,7 +16,9 @@ the Blueprint. The safe defaults below are already declared in the Blueprint.
 | `DATABASE_URL` | Your managed PostgreSQL connection URI, preferably the Render internal URL when colocated. `postgres://` and `postgresql://` are normalized to `postgresql+psycopg://`. URL-encode credentials; retain required TLS query parameters. |
 | `GROQ_API_KEY`, `TAVILY_API_KEY` | Dashboard secrets from [Groq](https://console.groq.com/keys) and [Tavily](https://app.tavily.com). Missing keys hold valid submissions as `verification_pending`. |
 | `GROQ_MODEL` | Default `openai/gpt-oss-120b`; ensure it is available to your account. |
-| `CORS_ORIGINS` | Comma-separated exact HTTPS frontend origins: scheme + hostname + optional port, without paths or trailing slashes. Spaces/blank entries are ignored. Do not use `*` or `null`. Local launch scripts use `http://localhost:3000`. |
+| `CORS_ORIGINS` | Comma-separated HTTPS frontend origins: scheme + hostname + optional port, without paths. Whitespace/trailing slashes are stripped and empty entries ignored. Do not use `*` or `null`. Local launch scripts use `http://localhost:3000`. |
+| `FORWARDED_ALLOW_IPS` | Uvicorn's comma-separated trusted ingress proxy IPs/CIDRs, obtained from the host. Required on Render; its startup command fails if this is empty. Docker/Compose default to loopback only for direct local use. Set the actual ingress addresses for hosted containers. |
+| `PORT` | Supplied by Render: do not replace it with a fixed dashboard value. Docker/Compose default to 8000 and respect overrides; Uvicorn always binds `0.0.0.0:$PORT`. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM`, `SMTP_USE_SSL` | Your email provider's hostname, login, secret and authorized sender. Default port 587 with STARTTLS (`SMTP_USE_SSL=false`); use port 465 with `true` for implicit TLS. Required for production registration/verification emails. |
 | `APP_ENV`, `DEBUG`, `EXPOSE_VERIFICATION_TOKEN_IN_RESPONSE` | Keep `production`, `false`, `false`. Never expose email verification codes in production responses. |
 | `INSTITUTIONAL_EMAIL_DOMAIN` | Default `du.ac.bd`, including departmental subdomains. |
@@ -26,24 +29,48 @@ the Blueprint. The safe defaults below are already declared in the Blueprint.
 
 ## Deployment order
 
-1. Provision a managed PostgreSQL database and configure the email provider. Choose
-   the public frontend origin before configuring CORS.
-2. Import `render.yaml` as a Render Blueprint and set the dashboard variables above.
-   Render builds from `backend/`. Startup runs `alembic upgrade head`, idempotent
-   category seeding, then Uvicorn bound to `0.0.0.0:$PORT`. Migration failure stops
-   startup. Back up an existing database before schema upgrades.
-3. Check that Render's `/health` probe returns HTTP 200 with `status: "ok"`.
-   This endpoint checks the database with `SELECT 1`; it never calls Groq/Tavily.
-4. In `index.html`, replace the clearly marked `DEPLOYED_API_BASE` placeholder with
+1. Provision PostgreSQL, a persistent media disk and the email provider. Choose the
+   public frontend origin. Obtain the host's ingress proxy IPs/CIDRs and confirm
+   how it sanitizes/appends `X-Forwarded-For`; these cannot be inferred offline.
+2. Import `render.yaml` and fill in the dashboard settings **before deployment**:
+   database, SMTP, provider keys, frontend CORS origins and trusted proxy addresses.
+   Keep the production safety defaults. Let the host supply `PORT`.
+3. Deploy the backend from `backend/`. Startup must complete, in order:
+   `alembic upgrade head` → `python -m app.db.seed` → Uvicorn with `--host 0.0.0.0`,
+   `--port "$PORT"`, `--proxy-headers`, `--forwarded-allow-ips "$FORWARDED_ALLOW_IPS"`.
+   The `&&` chain stops startup and logs an error if migrations cannot connect or
+   seeding fails; it never serves an unmigrated app. Back up an existing database
+   before upgrading. Do not suppress migration errors or use `--sql` on deployment.
+4. Confirm the process-only `/health` returns HTTP 200 with `status: "ok"` and the
+   host routes to it. It never touches the database, Groq or Tavily. A healthy
+   response alone does not establish database/provider availability; check the
+   migration logs and authenticated API smoke tests separately.
+5. In `index.html`, replace the clearly marked `DEPLOYED_API_BASE` placeholder with
    the API's HTTPS base URL (no `/docs` suffix), or insert a script assigning
    `window.DAIN_API_BASE` **before** the application script. This public URL is the
    only frontend configuration; never include keys. The localhost fallback is only
    used on `localhost`, `127.0.0.1`, or `[::1]`. A remaining placeholder emits a
    console warning. Static hosts do not substitute dashboard env vars into HTML.
-5. Publish the static frontend, confirm its exact origin is in `CORS_ORIGINS`, and
-   run the smoke tests below. For Docker, the same migrations/seeding run before
-   Uvicorn; `PORT` defaults to 8000. Compose waits for PostgreSQL readiness and
-   stores database/media in named volumes. No environment file is required by CI.
+6. Publish the frontend. Confirm a JSON POST preflight to `/submissions/verify`
+   succeeds from its exact origin, allowing `POST`, `OPTIONS`, `Content-Type` and
+   `Authorization`. Then run the authenticated smoke tests below. For Docker, the
+   same migrations/seeding run before Uvicorn. Compose waits for PostgreSQL
+   readiness and stores database/media in named volumes. CI needs no env file.
+
+Uvicorn converts `X-Forwarded-For` to the ASGI client address only when the
+connecting peer is trusted. The route limits that resolved address, never raw
+forwarding headers. For multiple proxies, list all trusted hops; Uvicorn selects
+the first untrusted address from the right, avoiding caller-injected leftmost
+addresses. Do not set `FORWARDED_ALLOW_IPS=*` on a directly reachable backend.
+Wildcard trust is appropriate only if the host guarantees every connection comes
+from trusted ingress and sanitizes client-supplied forwarding headers. Confirm
+this with the host rather than guessing a production trust range.
+
+A placeholder API URL or an HTTP API on an HTTPS frontend prevents connectivity;
+configure the actual HTTPS base URL, without `/docs`. A 401/403 with CORS headers
+means authentication is required; a 429 means a rate-limit bucket was exhausted.
+Neither is a CORS failure. Confirm the deployed artifact contains the configured
+URL and the host dashboard contains the frontend origin and proxy trust setting.
 
 ## Post-deploy smoke tests
 
