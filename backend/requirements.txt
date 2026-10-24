@@ -9,4 +9,3 @@ pytest==8.3.4
 httpx==0.28.1
 python-multipart==0.0.20
 alembic==1.14.1
-psycopg2-binary

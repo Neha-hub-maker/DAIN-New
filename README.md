@@ -39,7 +39,7 @@ This is an **ultra-lightweight static web application (0 MB `node_modules`)** st
 - **Framework Preset**: `Other`
 - **Build Command**: *(leave empty)*
 - **Output Directory**: `.` *(current directory)*
-- **Environment Variables**: *None needed!*
+- **Environment Variables**: No frontend secrets. Configure the public API URL in `index.html` and deploy the backend as described in [DEPLOY.md](DEPLOY.md).
 
 ### 2. Deploying to Netlify
 - Import this GitHub repository into [Netlify](https://netlify.com).
@@ -65,13 +65,13 @@ python -m http.server 3000
 
 ## Environment setup
 
-Copy the template to a local configuration file:
-
-```bash
-cp .env.example .env.local
-```
-
-Fill in the values you need using the links in the template; `GROQ_MODEL` is already set. Never commit `.env.local` or real API keys. The template documents configuration only; it does not enable API integrations or change how the application loads environment variables.
+The backend template is [backend/.env.example](backend/.env.example). Configure
+production values in the host dashboard as described in [DEPLOY.md](DEPLOY.md);
+never commit local environment files or real keys. The template uses production
+safety settings; local development instructions are in [backend/README.md](backend/README.md).
+The static frontend's public API URL is configured in `index.html` with
+`DEPLOYED_API_BASE` or `window.DAIN_API_BASE`; host environment variables are not
+automatically substituted into this HTML.
 
 ## 🏛️ Brand & Governance
 
