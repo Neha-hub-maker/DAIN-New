@@ -328,6 +328,30 @@
       border-color: rgba(0, 0, 0, 0.12);
       background: rgba(0, 0, 0, 0.04);
     }
+    .status-rejected {
+      color: #BE0000;
+      border-color: rgba(190, 0, 0, 0.35);
+      background: #FFF1F2;
+    }
+    .verification-summary {
+      padding: 1rem;
+      border: 1px solid #E5E8EE;
+      border-radius: 1rem;
+      background: #FFFFFF;
+      overflow-wrap: anywhere;
+    }
+    .verification-summary h4 { margin: 0 0 0.5rem; font-size: 0.875rem; }
+    .verification-reason { margin: 0 0 0.75rem; font-size: 0.75rem; }
+    .verification-claims { list-style: none; margin: 0; padding: 0; }
+    .verification-claim { padding: 0.75rem 0; border-top: 1px solid #E5E8EE; }
+    .verification-claim p { margin: 0.5rem 0; font-size: 0.75rem; }
+    .claim-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.7rem; }
+    .claim-badge { padding: 0.2rem 0.5rem; border: 1px solid; border-radius: 9999px; font-weight: 600; }
+    .claim-verified { color: #966C08; border-color: #E4CE99; background: #FFFBEB; }
+    .claim-unverified { color: #475569; border-color: #CBD5E1; background: #F1F5F9; }
+    .claim-contradicted { color: #BE0000; border-color: #FDA4AF; background: #FFF1F2; }
+    .verification-sources { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; font-size: 0.7rem; }
+    .verification-sources a { color: #BE0000; text-decoration: underline; text-underline-offset: 2px; }
 
     /* Toast Notification */
     .toast {
@@ -1245,6 +1269,7 @@
             <div id="pipeline-log" role="log" aria-live="polite" class="bg-surface-subtle border border-border-light rounded-2xl p-2.5 font-mono text-[11px] text-on-surface-variant">
               SYSTEM • Pipeline standing by for story submission...
             </div>
+            <section id="verification-results" hidden aria-label="Verification results" aria-live="polite"></section>
           </div>
         </section>
 
@@ -1427,6 +1452,12 @@
       "use strict";
 
       const API_BASE = "http://127.0.0.1:8000";
+
+      function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, character => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        })[character]);
+      }
 
       const seedStories = [
         {
@@ -1652,8 +1683,8 @@
           container.innerHTML = `
             <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border-light bg-white text-xs font-mono text-on-surface shadow-sm">
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span class="font-bold truncate max-w-[120px]">${user.name}</span>
-              <span class="text-academic-gold text-[10px] font-bold">(${user.role})</span>
+              <span class="font-bold truncate max-w-[120px]">${escapeHTML(user.name)}</span>
+              <span class="text-academic-gold text-[10px] font-bold">(${escapeHTML(user.role)})</span>
             </div>
             <button
               onclick="enterAppWorkspace('home')"
@@ -1709,7 +1740,7 @@
         const roleEl = document.getElementById("sidebar-user-role");
         if (roleEl) {
           if (user.isLoggedIn) {
-            roleEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-academic-gold"></span>Verified ${user.role || 'Member'}`;
+            roleEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-academic-gold"></span>Verified ${escapeHTML(user.role || 'Member')}`;
           } else {
             roleEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Guest Contributor`;
           }
@@ -1974,30 +2005,67 @@
         toastTimeout = setTimeout(() => toast.classList.remove("show"), 3200);
       };
 
-      // Story Card in Light Mode
+      function claimPresentation(verdict) {
+        if (verdict === "verified") return ["Verified", "claim-verified"];
+        if (verdict === "contradicted") return ["Contradicted", "claim-contradicted"];
+        return ["Not found online", "claim-unverified"];
+      }
+
+      function safeSourceURL(value) {
+        if (typeof value !== "string") return null;
+        try {
+          const url = new URL(value);
+          return ["http:", "https:"].includes(url.protocol) && !url.username && !url.password ? url.href : null;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function renderVerificationHTML(verification) {
+        if (!verification || typeof verification !== "object") {
+          return '<div class="verification-summary"><h4>Verification results</h4><p class="verification-reason">No verification result is available for this story.</p></div>';
+        }
+        const claims = Array.isArray(verification.claims) ? verification.claims.filter(claim => claim && typeof claim === "object") : [];
+        return `<div class="verification-summary">
+          <h4>Verification results</h4>
+          <p class="verification-reason"><strong>Overall reason:</strong> ${escapeHTML(verification.reason || "No reason provided.")}</p>
+          ${claims.length ? `<ol class="verification-claims">${claims.map(claim => {
+            const [label, badgeClass] = claimPresentation(claim.verdict);
+            const confidence = Number.isFinite(claim.confidence) && claim.confidence >= 0 && claim.confidence <= 1 ? `${Math.round(claim.confidence * 100)}%` : "Not available";
+            const sources = [...new Set((Array.isArray(claim.sources) ? claim.sources : []).map(safeSourceURL).filter(Boolean))];
+            return `<li class="verification-claim">
+              <div class="claim-meta"><span class="claim-badge ${badgeClass}">${escapeHTML(label)}</span><span>Confidence: ${escapeHTML(confidence)}</span></div>
+              <p>${escapeHTML(claim.text)}</p>
+              <div class="verification-sources">${sources.length ? sources.map(url => `<a href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(url)}</a>`).join("") : '<span>No eligible source links.</span>'}</div>
+            </li>`;
+          }).join("")}</ol>` : '<p class="verification-reason">No checkable claims were returned.</p>'}
+        </div>`;
+      }
+
+      // Story Card in Light Mode; dynamic values are data, never executable markup.
       function renderStoryCardHTML(story) {
         return `
           <div class="p-5 rounded-3xl bg-white border border-border-light hover:border-academic-gold shadow-apple hover:shadow-apple-hover apple-motion flex flex-col justify-between group">
             <div class="space-y-2.5">
               <div class="flex items-center justify-between gap-2">
                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase font-bold border border-academic-gold/30 bg-amber-50 text-academic-gold">
-                  ${story.category}
+                  ${escapeHTML(story.category)}
                 </span>
-                <span class="text-[11px] font-mono text-on-surface-variant">${story.date}</span>
+                <span class="text-[11px] font-mono text-on-surface-variant">${escapeHTML(story.date)}</span>
               </div>
               <h4 class="font-bold text-sm text-on-surface group-hover:text-dunite-red apple-motion leading-snug">
-                ${story.headline}
+                ${escapeHTML(story.headline)}
               </h4>
               <p class="text-xs text-on-surface-variant line-clamp-2 leading-relaxed">
-                ${story.summary}
+                ${escapeHTML(story.summary)}
               </p>
             </div>
             <div class="pt-3 mt-3 border-t border-border-light flex items-center justify-between">
               <div class="flex items-center gap-1.5 text-[11px] text-on-surface-variant font-mono truncate max-w-[120px]">
                 <span class="material-symbols-outlined text-sm text-academic-gold">verified</span>
-                <span class="truncate">${story.author}</span>
+                <span class="truncate">${escapeHTML(story.author)}</span>
               </div>
-              <button onclick="openPressKit('${story.id}')" class="text-xs font-mono font-semibold text-dunite-red hover:underline flex items-center gap-0.5 apple-tap">
+              <button type="button" data-story-action="open" data-story-id="${escapeHTML(story.id)}" class="text-xs font-mono font-semibold text-dunite-red hover:underline flex items-center gap-0.5 apple-tap">
                 <span>Press Kit</span>
                 <span class="material-symbols-outlined text-sm">arrow_forward</span>
               </button>
@@ -2020,7 +2088,7 @@
           <div class="col-span-3 text-center py-12 space-y-2">
             <span class="material-symbols-outlined text-3xl text-on-surface-variant">search_off</span>
             <p class="text-on-surface-variant font-mono text-xs">No verified stories found.</p>
-            <button onclick="renderStoriesDirectory('All')" class="px-3 py-1 rounded-full border border-dunite-red text-dunite-red text-xs font-mono">Reset Filter</button>
+            <button type="button" data-story-action="reset-filter" class="px-3 py-1 rounded-full border border-dunite-red text-dunite-red text-xs font-mono">Reset Filter</button>
           </div>
         `;
       }
@@ -2038,13 +2106,13 @@
         if (!table) return;
         table.innerHTML = stories.map(s => `
           <tr class="hover:bg-surface-subtle apple-motion">
-            <td class="p-3"><p class="font-bold text-on-surface max-w-[240px] truncate">${s.headline}</p><span class="text-[10px] font-mono text-on-surface-variant">${s.id}</span></td>
-            <td class="p-3"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase bg-amber-50 text-academic-gold border border-academic-gold/30">${s.category}</span></td>
-            <td class="p-3"><p class="font-medium text-on-surface">${s.author}</p></td>
-            <td class="p-3"><span class="status-chip ${s.status === 'Approved' ? 'status-approved' : 'status-review'} px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono">${s.status}</span></td>
+            <td class="p-3"><p class="font-bold text-on-surface max-w-[240px] truncate">${escapeHTML(s.headline)}</p><span class="text-[10px] font-mono text-on-surface-variant">${escapeHTML(s.id)}</span></td>
+            <td class="p-3"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase bg-amber-50 text-academic-gold border border-academic-gold/30">${escapeHTML(s.category)}</span></td>
+            <td class="p-3"><p class="font-medium text-on-surface">${escapeHTML(s.author)}</p></td>
+            <td class="p-3"><span class="status-chip ${s.status === 'Approved' ? 'status-approved' : s.status === 'Rejected' ? 'status-rejected' : 'status-review'} px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono">${escapeHTML(s.status)}</span></td>
             <td class="p-3 text-right space-x-2">
-              <button onclick="openPressKit('${s.id}')" class="text-dunite-red hover:underline font-mono text-xs apple-tap font-semibold">Review</button>
-              ${s.status !== 'Approved' ? `<button onclick="approveAdminStory('${s.id}')" class="px-2.5 py-1 bg-dunite-red hover:bg-red-700 text-white rounded-xl text-[10px] font-bold uppercase font-mono apple-tap shadow-sm">Approve</button>` : ''}
+              <button type="button" data-story-action="open" data-story-id="${escapeHTML(s.id)}" class="text-dunite-red hover:underline font-mono text-xs apple-tap font-semibold">Review</button>
+              ${s.status === 'Pending Review' ? `<button type="button" data-story-action="approve" data-story-id="${escapeHTML(s.id)}" class="px-2.5 py-1 bg-dunite-red hover:bg-red-700 text-white rounded-xl text-[10px] font-bold uppercase font-mono apple-tap shadow-sm">Approve</button>` : ''}
             </td>
           </tr>
         `).join("");
@@ -2052,7 +2120,7 @@
 
       window.approveAdminStory = function(id) {
         const target = stories.find(s => s.id === id);
-        if (target) {
+        if (target && target.status === "Pending Review") {
           target.status = "Approved";
           target.reach = Math.floor(Math.random() * 20000) + 15000;
           localStorage.setItem("dain_stories", JSON.stringify(stories));
@@ -2080,34 +2148,63 @@
             <div class="p-4 rounded-2xl bg-surface-subtle border border-border-light space-y-2">
               <div class="flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
                 <span class="text-dunite-red font-bold uppercase">${story.status === "Approved" ? "FOR IMMEDIATE RELEASE" : "EDITORIAL REVIEW ONLY"}</span>
-                <span>${story.date}</span>
+                <span>${escapeHTML(story.date)}</span>
               </div>
-              <h2 class="font-display text-lg font-bold text-on-surface">${story.headline}</h2>
+              <h2 class="font-display text-lg font-bold text-on-surface">${escapeHTML(story.headline)}</h2>
               <div class="flex flex-wrap gap-2 text-xs font-mono pt-1">
-                <span class="px-2.5 py-0.5 rounded-full bg-white border border-border-light text-academic-gold font-semibold">${story.category}</span>
-                <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-academic-gold border border-academic-gold/30 font-semibold">${story.status === "Approved" ? "&check; DU Verified" : story.status}</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-white border border-border-light text-academic-gold font-semibold">${escapeHTML(story.category)}</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-academic-gold border border-academic-gold/30 font-semibold">${story.status === "Approved" ? "&check; DU Verified" : escapeHTML(story.status)}</span>
               </div>
             </div>
             <div class="p-4 rounded-2xl bg-amber-50/50 border border-academic-gold/30 space-y-2">
               <div class="flex items-center justify-between">
                 <span class="text-xs uppercase font-mono font-bold text-academic-gold">Executive Summary</span>
-                <button onclick="navigator.clipboard.writeText('${story.summary.replace(/'/g, "\\'")}'); showToast('Copied to clipboard!', 'content_copy')" class="text-[11px] font-mono text-dunite-red hover:underline apple-tap font-semibold">Copy</button>
+                <button type="button" data-story-action="copy-summary" data-story-id="${escapeHTML(story.id)}" class="text-[11px] font-mono text-dunite-red hover:underline apple-tap font-semibold">Copy</button>
               </div>
-              <p class="text-xs text-on-surface leading-relaxed">${story.summary}</p>
+              <p class="text-xs text-on-surface leading-relaxed">${escapeHTML(story.summary)}</p>
             </div>
             <div class="p-4 rounded-2xl bg-surface-subtle border border-border-light space-y-1">
               <span class="text-xs uppercase font-mono font-bold text-on-surface">Full Story</span>
-              <p class="text-xs text-on-surface-variant leading-relaxed">${story.detailedStory || story.summary}</p>
+              <p class="text-xs text-on-surface-variant leading-relaxed">${escapeHTML(story.detailedStory || story.summary)}</p>
             </div>
             <div class="p-4 rounded-2xl bg-surface-subtle border border-border-light flex items-center justify-between gap-4">
-              <div><span class="text-[10px] font-mono uppercase text-on-surface-variant">Media Contact</span><p class="text-xs font-bold text-on-surface">${story.author} &bull; <span class="text-academic-gold font-mono">${story.authorEmail || 'contact@du.ac.bd'}</span></p></div>
-              <button onclick="navigator.clipboard.writeText('# ${story.headline}\\n\\n${story.summary}'); showToast('Press release copied!', 'assignment_turned_in')" class="px-3.5 py-1.5 rounded-xl bg-dunite-red text-white text-xs font-mono font-bold hover:bg-red-700 apple-tap shadow-sm">Copy Release</button>
+              <div><span class="text-[10px] font-mono uppercase text-on-surface-variant">Media Contact</span><p class="text-xs font-bold text-on-surface">${escapeHTML(story.author)} &bull; <span class="text-academic-gold font-mono">${escapeHTML(story.authorEmail || 'contact@du.ac.bd')}</span></p></div>
+              <button type="button" data-story-action="copy-release" data-story-id="${escapeHTML(story.id)}" class="px-3.5 py-1.5 rounded-xl bg-dunite-red text-white text-xs font-mono font-bold hover:bg-red-700 apple-tap shadow-sm">Copy Release</button>
             </div>
+            ${story.status !== "Approved" ? renderVerificationHTML(story.verification) : ""}
           `;
           sk.classList.add("hidden");
           body.classList.remove("hidden");
         }, 160);
       };
+
+      // Delegation also covers buttons inserted by later renders. Story data never
+      // becomes JavaScript source or a selector; lookup uses the decoded ID value.
+      document.addEventListener("click", async event => {
+        if (!(event.target instanceof Element)) return;
+        const button = event.target.closest("button[data-story-action]");
+        if (!button) return;
+        const action = button.dataset.storyAction;
+        if (action === "reset-filter") {
+          renderStoriesDirectory("All");
+          return;
+        }
+        const story = stories.find(item => item.id === button.dataset.storyId);
+        if (!story) return;
+        if (action === "open") {
+          openPressKit(story.id);
+        } else if (action === "approve") {
+          approveAdminStory(story.id);
+        } else if (action === "copy-summary" || action === "copy-release") {
+          const text = action === "copy-summary" ? String(story.summary ?? "") : `# ${story.headline ?? ""}\n\n${story.summary ?? ""}`;
+          try {
+            await navigator.clipboard.writeText(text);
+            showToast(action === "copy-summary" ? "Copied to clipboard!" : "Press release copied!", "content_copy");
+          } catch (error) {
+            showToast("Could not copy the story. Please try again.", "error");
+          }
+        }
+      });
 
       // Wizard Controls
       const btnNext = document.getElementById("btn-wizard-next");
@@ -2129,6 +2226,9 @@
       }
 
       function resetPipeline(message) {
+        const results = document.getElementById("verification-results");
+        results.hidden = true;
+        results.replaceChildren();
         stageIds.forEach((_id, index) => {
           const card = document.getElementById(`validation-stage-${index}`);
           card.classList.remove("active", "complete", "failed", "held", "skipped");
@@ -2289,14 +2389,14 @@
               showToast("Please select an Achievement Sector.", "error");
               return;
             }
-            if (!h || h.length < 5) {
+            if (!h || h.length < 10) {
               highlightErrorField("headline");
-              showToast(`Headline is too short (min 5 characters, currently ${h.length}).`, "error");
+              showToast(`Headline is too short (min 10 characters, currently ${h.length}).`, "error");
               return;
             }
-            if (!s || s.length < 5) {
+            if (!s || s.length < 30) {
               highlightErrorField("summary");
-              showToast(`Executive Summary is too short (min 5 characters, currently ${s.length}).`, "error");
+              showToast(`Executive Summary is too short (min 30 characters, currently ${s.length}).`, "error");
               return;
             }
             wizardStep = 2;
@@ -2355,9 +2455,12 @@
             resetPipeline("VERIFICATION • Waiting for the backend result…");
             try {
               const verification = await requestStoryVerification(payload);
+              const results = document.getElementById("verification-results");
+              results.innerHTML = renderVerificationHTML(verification);
+              results.hidden = false;
               appendPipelineLog(`VERIFICATION • ${verification.status}: ${verification.reason}`);
               await animatePipeline(verification.stages);
-              verification.claims.forEach(claim => appendPipelineLog(`CLAIM • ${claim.verdict} (${Math.round(claim.confidence * 100)}%): ${claim.text}`));
+              verification.claims.forEach(claim => appendPipelineLog(`CLAIM • ${claimPresentation(claim.verdict)[0]} (${Math.round(claim.confidence * 100)}%): ${claim.text}`));
               const status = verification.status === "verified" ? "Approved" : (verification.status === "rejected" ? "Rejected" : "Pending Review");
               const newStory = {
                 id: createStoryId(), headline: payload.headline, summary: payload.summary,
@@ -2464,15 +2567,15 @@
       function updateCounters() {
         if (headlineInput && headlineCounter) {
           const len = headlineInput.value.length;
-          headlineCounter.textContent = len >= 5 ? `✓ ${len} / 120` : `${len} / 120 (min 5)`;
-          headlineCounter.classList.toggle("text-dunite-red", len > 0 && len < 5);
-          headlineCounter.classList.toggle("text-academic-gold", len >= 5);
+          headlineCounter.textContent = len >= 10 ? `✓ ${len} / 120` : `${len} / 120 (min 10)`;
+          headlineCounter.classList.toggle("text-dunite-red", len > 0 && len < 10);
+          headlineCounter.classList.toggle("text-academic-gold", len >= 10);
         }
         if (summaryInput && summaryCounter) {
           const len = summaryInput.value.length;
-          summaryCounter.textContent = len >= 5 ? `✓ ${len} / 600` : `${len} / 600 (min 5)`;
-          summaryCounter.classList.toggle("text-dunite-red", len > 0 && len < 5);
-          summaryCounter.classList.toggle("text-academic-gold", len >= 5);
+          summaryCounter.textContent = len >= 30 ? `✓ ${len} / 600` : `${len} / 600 (min 30)`;
+          summaryCounter.classList.toggle("text-dunite-red", len > 0 && len < 30);
+          summaryCounter.classList.toggle("text-academic-gold", len >= 30);
         }
       }
 
