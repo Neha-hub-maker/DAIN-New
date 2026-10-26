@@ -851,6 +851,23 @@
         </button>
       </form>
 
+      <!-- Email verification: shown only after the backend accepts a registration -->
+      <form id="auth-form-verify" onsubmit="handleVerifyEmailSubmit(event)" class="hidden space-y-4">
+        <div class="space-y-2">
+          <h4 class="font-display text-base font-bold">Verify your institutional email</h4>
+          <p class="text-xs text-on-surface-variant leading-relaxed">We received your registration for <span id="verify-email-address" class="font-semibold text-on-surface"></span>. Enter the one-time verification code sent to that email address. The account cannot sign in until the code is verified.</p>
+        </div>
+        <div>
+          <label class="text-xs text-on-surface-variant block mb-1 font-medium" for="verify-email-token">Verification code *</label>
+          <input id="verify-email-token" type="text" required minlength="20" maxlength="512" autocomplete="one-time-code" placeholder="Paste your verification code" class="w-full bg-surface-subtle border border-border-light rounded-2xl py-2.5 px-3 text-sm text-on-surface focus:border-dunite-red focus:bg-white" />
+        </div>
+        <button type="submit" class="w-full bg-dunite-red hover:bg-red-700 text-white font-bold py-3 rounded-2xl text-xs uppercase tracking-wider transition-all shadow-apple hover:shadow-glow apple-tap flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-sm">verified_user</span>
+          <span>Verify Email</span>
+        </button>
+        <button type="button" onclick="setAuthTab('login')" class="w-full py-2 text-xs font-semibold text-on-surface-variant hover:text-dunite-red">Back to Sign In</button>
+      </form>
+
       <!-- 3. Quick 1-Click Demo Logins -->
       <div id="auth-form-demo" class="hidden space-y-3">
         <p class="text-xs text-on-surface-variant font-mono mb-2">Select a pre-configured profile for 1-click testing:</p>
@@ -1630,13 +1647,15 @@
       };
 
       let pendingPublishAction = null;
+      let pendingRegistrationEmail = "";
 
       window.setAuthTab = function(tab) {
-        ["login", "register", "demo"].forEach(t => {
+        ["login", "register", "demo", "verify"].forEach(t => {
           const btn = document.getElementById(`tab-auth-${t}`);
           const form = document.getElementById(`auth-form-${t}`);
-          if (btn && form) {
-            const isActive = t === tab;
+          const isActive = t === tab;
+          if (form) form.classList.toggle("hidden", !isActive);
+          if (btn) {
             btn.classList.toggle("border-dunite-red", isActive);
             btn.classList.toggle("bg-dunite-red/10", isActive);
             btn.classList.toggle("text-dunite-red", isActive);
@@ -1645,7 +1664,6 @@
             btn.classList.toggle("bg-surface-subtle", !isActive);
             btn.classList.toggle("text-on-surface-variant", !isActive);
             btn.classList.toggle("font-medium", !isActive);
-            form.classList.toggle("hidden", !isActive);
           }
         });
       };
@@ -1813,68 +1831,201 @@
         e.preventDefault();
         const email = document.getElementById("login-email").value.trim();
         const password = document.getElementById("login-password").value;
+        const form = document.getElementById("auth-form-login");
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonHTML = submitButton.innerHTML;
 
+        if (!API_BASE) {
+          showToast("The DAIN backend URL is not configured. Please contact the site administrator.", "error");
+          return;
+        }
         if (!isDUInstitutionalEmail(email)) {
-          showToast("Use your DU email, such as name@cs.du.ac.bd or name@du.ac.bd.", "error");
+          showToast("Use your DU institutional email address, such as name@du.ac.bd or a department subdomain.", "error");
           return;
         }
 
+        submitButton.disabled = true;
+        submitButton.querySelector("span:last-child").textContent = "Signing In…";
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 20000);
         try {
-          sessionStorage.removeItem("dain_api_session");
-          const res = await fetch(`${API_BASE}/auth/login`, {
+          const response = await fetch(`${API_BASE}/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password }),
+            signal: controller.signal
           });
-          if (res.ok) {
-            const data = await res.json();
-            if (typeof data.access_token === "string" && data.access_token) {
-              sessionStorage.setItem("dain_api_session", JSON.stringify({ email, token: data.access_token }));
-            }
-            showToast("FastAPI Server: Logged in successfully!", "verified");
-          }
-        } catch (err) {}
+          let data = {};
+          try { data = await response.json(); } catch (error) {}
 
-        const name = email.split("@")[0].replace(".", " ").replace(/\b\w/g, l => l.toUpperCase());
-        const userObj = {
-          name: name || "DU Member",
-          email: email,
-          role: email.includes("editor") ? "Editor" : (email.includes("dr") || email.includes("prof") ? "Faculty" : "Student"),
-          institution: "University of Dhaka",
-          isVerified: true
-        };
-        completeAuthSuccess(userObj, userObj.role === "Editor" ? "admin" : "home");
+          if (!response.ok) {
+            const detail = typeof data.detail === "string" ? data.detail : "";
+            if (response.status === 401) {
+              showToast("Incorrect email or password. Please check your details and try again.", "error");
+            } else if (response.status === 403 && /verify.*email|email.*verif/i.test(detail)) {
+              showToast("Your account is not verified yet. Complete email verification before signing in.", "error");
+            } else {
+              showToast(detail || `Sign-in failed (server returned ${response.status}).`, "error");
+            }
+            return;
+          }
+
+          if (typeof data.access_token !== "string" || !data.access_token) {
+            showToast("The backend did not return a valid sign-in session. Please contact the site administrator.", "error");
+            return;
+          }
+
+          sessionStorage.setItem("dain_api_session", JSON.stringify({ email, token: data.access_token }));
+          const apiUser = data.user || {};
+          const roleValue = String(apiUser.role || "user").toLowerCase();
+          const role = roleValue === "editor" ? "Editor" : roleValue === "admin" ? "Admin" : "Student";
+          const userObj = {
+            name: apiUser.full_name || email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, letter => letter.toUpperCase()),
+            email: apiUser.email || email,
+            role,
+            institution: apiUser.department || "University of Dhaka",
+            isVerified: Boolean(apiUser.is_email_verified),
+            isLoggedIn: true
+          };
+          completeAuthSuccess(userObj, (role === "Editor" || role === "Admin") ? "admin" : "home");
+        } catch (error) {
+          const message = error?.name === "AbortError"
+            ? "Sign-in timed out. Please try again."
+            : "Could not reach the sign-in server. Check the backend status, CORS settings, and Render logs.";
+          showToast(message, "error");
+        } finally {
+          clearTimeout(timeout);
+          submitButton.disabled = false;
+          submitButton.innerHTML = originalButtonHTML;
+        }
       };
 
       window.handleRegisterSubmit = async function(e) {
         e.preventDefault();
         const name = document.getElementById("register-name").value.trim();
         const email = document.getElementById("register-email").value.trim();
-        const role = document.getElementById("register-role").value;
         const password = document.getElementById("register-password").value;
+        const form = document.getElementById("auth-form-register");
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonHTML = submitButton.innerHTML;
 
+        if (!API_BASE) {
+          showToast("The DAIN backend URL is not configured. Please contact the site administrator.", "error");
+          return;
+        }
         if (!isDUInstitutionalEmail(email)) {
-          showToast("Use your DU email, such as name@cs.du.ac.bd or name@du.ac.bd.", "error");
+          showToast("Use your DU institutional email address, such as name@du.ac.bd or a department subdomain.", "error");
+          return;
+        }
+        if (password.length < 12) {
+          showToast("Your password must contain at least 12 characters.", "error");
+          document.getElementById("register-password").focus();
           return;
         }
 
+        submitButton.disabled = true;
+        submitButton.querySelector("span:last-child").textContent = "Creating Account…";
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 25000);
         try {
-          sessionStorage.removeItem("dain_api_session");
-          await fetch(`${API_BASE}/auth/register`, {
+          const response = await fetch(`${API_BASE}/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password, full_name: name })
+            body: JSON.stringify({ email, password, full_name: name }),
+            signal: controller.signal
           });
-        } catch (err) {}
+          let data = {};
+          try { data = await response.json(); } catch (error) {}
 
-        const userObj = {
-          name: name,
-          email: email,
-          role: role,
-          institution: "University of Dhaka",
-          isVerified: true
-        };
-        completeAuthSuccess(userObj, role === "Editor" ? "admin" : "home");
+          if (!response.ok) {
+            const detail = typeof data.detail === "string" ? data.detail : "";
+            if (response.status === 409) {
+              showToast("An account with this email already exists. Please sign in instead.", "error");
+              document.getElementById("login-email").value = email;
+            } else if (response.status === 422) {
+              showToast(detail || "The details were not accepted. Use a valid DU institutional email and a password of at least 12 characters.", "error");
+            } else if (response.status >= 500) {
+              showToast("Registration failed on the server. Email verification may not be configured. Ask the administrator to check Render logs and SMTP settings.", "error");
+              console.error("DAIN registration server error", { status: response.status });
+            } else {
+              showToast(detail || `Registration failed (server returned ${response.status}).`, "error");
+            }
+            return;
+          }
+
+          pendingRegistrationEmail = email;
+          document.getElementById("verify-email-address").textContent = email;
+          document.getElementById("verify-email-token").value = "";
+          showToast("Registration received. Check your institutional inbox for the verification code.", "mark_email_read");
+          setAuthTab("verify");
+        } catch (error) {
+          const message = error?.name === "AbortError"
+            ? "Registration timed out. Please try again or contact the site administrator."
+            : "Could not reach the registration server. Check backend status, CORS settings, and Render logs.";
+          showToast(message, "error");
+          console.error("DAIN registration request failed", {
+            type: error instanceof TypeError ? "network_or_cors" : (error?.name || "Error")
+          });
+        } finally {
+          clearTimeout(timeout);
+          submitButton.disabled = false;
+          submitButton.innerHTML = originalButtonHTML;
+        }
+      };
+
+      window.handleVerifyEmailSubmit = async function(e) {
+        e.preventDefault();
+        const token = document.getElementById("verify-email-token").value.trim();
+        const email = pendingRegistrationEmail || document.getElementById("register-email").value.trim();
+        const form = document.getElementById("auth-form-verify");
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonHTML = submitButton.innerHTML;
+
+        if (!API_BASE) {
+          showToast("The DAIN backend URL is not configured. Please contact the site administrator.", "error");
+          return;
+        }
+        if (!token) {
+          showToast("Enter the verification code from your institutional email.", "error");
+          return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.querySelector("span:last-child").textContent = "Verifying…";
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 20000);
+        try {
+          const response = await fetch(`${API_BASE}/auth/verify-email`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token }),
+            signal: controller.signal
+          });
+          let data = {};
+          try { data = await response.json(); } catch (error) {}
+
+          if (!response.ok) {
+            const detail = typeof data.detail === "string" ? data.detail : "";
+            showToast(detail || `Email verification failed (server returned ${response.status}). Check the code and try again.`, "error");
+            return;
+          }
+
+          document.getElementById("login-email").value = email;
+          document.getElementById("login-password").value = "";
+          document.getElementById("verify-email-token").value = "";
+          pendingRegistrationEmail = "";
+          setAuthTab("login");
+          showToast(data.message || "Email verified. You can now sign in.", "verified");
+        } catch (error) {
+          const message = error?.name === "AbortError"
+            ? "Email verification timed out. Please try again."
+            : "Could not reach the verification server. Check the backend status and CORS settings.";
+          showToast(message, "error");
+        } finally {
+          clearTimeout(timeout);
+          submitButton.disabled = false;
+          submitButton.innerHTML = originalButtonHTML;
+        }
       };
 
       window.loginAsDemo = function(roleType) {
