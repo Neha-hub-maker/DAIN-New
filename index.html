@@ -1445,6 +1445,8 @@
     <p id="toast-message" class="text-xs font-medium text-on-surface leading-tight"></p>
   </div>
 
+  <script src="api-config.js"></script>
+
   <!-- ==================================================================== -->
   <!-- 6. JAVASCRIPT CONTROLLER                                             -->
   <!-- ==================================================================== -->
@@ -1452,15 +1454,13 @@
     (() => {
       "use strict";
 
-      // PRODUCTION SETUP: replace this placeholder with the deployed HTTPS API URL,
-      // or define window.DAIN_API_BASE in a script before this application script.
-      const DEPLOYED_API_BASE = "https://YOUR-DAIN-BACKEND.example.com";
+      // Production API URL is supplied by api-config.js so it can be configured
+      // without editing this large HTML file. Never put API keys in frontend code.
       const isLocalPage = ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
-      const API_BASE = (typeof window.DAIN_API_BASE === "string" && window.DAIN_API_BASE.trim()
-        ? window.DAIN_API_BASE.trim()
-        : isLocalPage ? "http://127.0.0.1:8000" : DEPLOYED_API_BASE).replace(/\/+$/, "");
-      if (API_BASE === "https://YOUR-DAIN-BACKEND.example.com") {
-        console.warn("DAIN: Backend URL is not configured. Set window.DAIN_API_BASE or edit DEPLOYED_API_BASE in index.html before deployment.");
+      const configuredApiBase = typeof window.DAIN_API_BASE === "string" ? window.DAIN_API_BASE.trim() : "";
+      const API_BASE = (configuredApiBase || (isLocalPage ? "http://127.0.0.1:8000" : "")).replace(/\\/+$/, "");
+      if (!API_BASE) {
+        console.error("DAIN: Backend URL is not configured. Set window.DAIN_API_BASE in api-config.js.");
       }
 
       function escapeHTML(value) {
