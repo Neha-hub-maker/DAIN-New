@@ -1,6 +1,6 @@
 /* DAIN frontend API configuration.
- * Set this to the deployed backend's public HTTPS origin, e.g. https://your-service.onrender.com
- * Do not add a trailing path such as /health or /submissions/verify.
+ * Public HTTPS origin of the deployed Render backend. Do not add /docs,
+ * /health, or /submissions/verify; the app appends API paths itself.
  * Never place GROQ_API_KEY, TAVILY_API_KEY, database credentials, or other secrets here.
  */
-window.DAIN_API_BASE = "";
+window.DAIN_API_BASE = "https://dain-backend.onrender.com";
