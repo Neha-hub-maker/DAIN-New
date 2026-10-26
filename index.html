@@ -1458,7 +1458,7 @@
       // without editing this large HTML file. Never put API keys in frontend code.
       const isLocalPage = ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
       const configuredApiBase = typeof window.DAIN_API_BASE === "string" ? window.DAIN_API_BASE.trim() : "";
-      const API_BASE = (configuredApiBase || (isLocalPage ? "http://127.0.0.1:8000" : "")).replace(/\\/+$/, "");
+      const API_BASE = (configuredApiBase || (isLocalPage ? "http://127.0.0.1:8000" : "")).replace(/\/+$/, "");
       if (!API_BASE) {
         console.error("DAIN: Backend URL is not configured. Set window.DAIN_API_BASE in api-config.js.");
       }
