@@ -2327,6 +2327,11 @@
       }
 
       async function requestStoryVerification(payload) {
+        if (!API_BASE) {
+          const message = "The verification backend URL has not been configured";
+          console.error("DAIN verification request skipped: missing API base URL.");
+          return pendingVerification("backend_not_configured", "Verification is not configured yet. Editorial review is required.", message);
+        }
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 40000);
         try {
