@@ -45,12 +45,11 @@ the Blueprint. The safe defaults below are already declared in the Blueprint.
    host routes to it. It never touches the database, Groq or Tavily. A healthy
    response alone does not establish database/provider availability; check the
    migration logs and authenticated API smoke tests separately.
-5. In `index.html`, replace the clearly marked `DEPLOYED_API_BASE` placeholder with
-   the API's HTTPS base URL (no `/docs` suffix), or insert a script assigning
-   `window.DAIN_API_BASE` **before** the application script. This public URL is the
-   only frontend configuration; never include keys. The localhost fallback is only
-   used on `localhost`, `127.0.0.1`, or `[::1]`. A remaining placeholder emits a
-   console warning. Static hosts do not substitute dashboard env vars into HTML.
+5. Set `window.DAIN_API_BASE` in the root `api-config.js` to the API's HTTPS base
+   URL (origin only; no `/docs`, `/health`, or API path). This is public frontend
+   configuration; never place provider/database keys here. The localhost fallback
+   is only used on `localhost`, `127.0.0.1`, or `[::1]`. Static hosts do not substitute
+   dashboard environment variables into static files.
 6. Publish the frontend. Confirm a JSON POST preflight to `/submissions/verify`
    succeeds from its exact origin, allowing `POST`, `OPTIONS`, `Content-Type` and
    `Authorization`. Then run the authenticated smoke tests below. For Docker, the
