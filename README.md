@@ -69,9 +69,10 @@ The backend template is [backend/.env.example](backend/.env.example). Configure
 production values in the host dashboard as described in [DEPLOY.md](DEPLOY.md);
 never commit local environment files or real keys. The template uses production
 safety settings; local development instructions are in [backend/README.md](backend/README.md).
-The static frontend's public API URL is configured in `index.html` with
-`DEPLOYED_API_BASE` or `window.DAIN_API_BASE`; host environment variables are not
-automatically substituted into this HTML.
+The static frontend's public API URL is configured in the root `api-config.js` file
+with `window.DAIN_API_BASE`; host environment variables are not automatically
+substituted into static files. Set it to the public backend origin (without `/docs`,
+`/health`, or API paths). Keep all provider/database secrets on the backend only.
 
 ## 🏛️ Brand & Governance
 
