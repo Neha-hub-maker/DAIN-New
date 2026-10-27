@@ -16,10 +16,7 @@ BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
 
 
-def startup_command(target):
-    if target == "render":
-        blueprint = (REPO_ROOT / "render.yaml").read_text()
-        return next(line.split(":", 1)[1].strip() for line in blueprint.splitlines() if line.strip().startswith("startCommand:"))
+def startup_command():
     dockerfile = (BACKEND_ROOT / "Dockerfile").read_text()
     command = json.loads(next(line[4:] for line in dockerfile.splitlines() if line.startswith("CMD ")))
     assert command[:2] == ["sh", "-c"]
@@ -29,7 +26,7 @@ def startup_command(target):
 @pytest.fixture
 def startup_environment(tmp_path):
     if os.name != "posix":
-        pytest.skip("Render and Docker startup commands use a POSIX shell.")
+        pytest.skip("Local Docker startup commands use a POSIX shell.")
     # Run real local migrations/seeding. Only replace the final listening process
     # with an argv recorder, so no port is ever opened by these tests.
     shim = tmp_path / "python"
@@ -53,10 +50,9 @@ if sys.argv[1:3] != ["-m", "uvicorn"]:
     }
 
 
-@pytest.mark.parametrize("target", ["render", "docker"])
-def test_startup_migrates_and_seeds_before_binding_host_port(target, startup_environment):
+def test_startup_migrates_and_seeds_before_binding_host_port(startup_environment):
     result = subprocess.run(
-        ["sh", "-c", startup_command(target)],
+        ["sh", "-c", startup_command()],
         cwd=BACKEND_ROOT,
         env=startup_environment,
         capture_output=True,
@@ -72,12 +68,11 @@ def test_startup_migrates_and_seeds_before_binding_host_port(target, startup_env
     ]
 
 
-@pytest.mark.parametrize("target", ["render", "docker"])
-def test_migration_connection_failure_stops_startup_loudly(target, startup_environment, tmp_path):
+def test_migration_connection_failure_stops_startup_loudly(startup_environment, tmp_path):
     # A missing SQLite directory simulates a connection error without networking.
     startup_environment["DATABASE_URL"] = f"sqlite+pysqlite:///{tmp_path / 'missing' / 'database.db'}"
     result = subprocess.run(
-        ["sh", "-c", startup_command(target)],
+        ["sh", "-c", startup_command()],
         cwd=BACKEND_ROOT,
         env=startup_environment,
         capture_output=True,
@@ -90,22 +85,6 @@ def test_migration_connection_failure_stops_startup_loudly(target, startup_envir
     assert calls == [["-m", "alembic", "upgrade", "head"]]
 
 
-def test_render_requires_proxy_trust_configuration(startup_environment):
-    startup_environment.pop("FORWARDED_ALLOW_IPS")
-    result = subprocess.run(
-        ["sh", "-c", startup_command("render")],
-        cwd=BACKEND_ROOT,
-        env=startup_environment,
-        capture_output=True,
-        text=True,
-    )
-
-    assert result.returncode != 0
-    assert "Configure trusted proxy IPs or CIDRs" in result.stderr
-    calls = [json.loads(line) for line in Path(startup_environment["STARTUP_CALLS"]).read_text().splitlines()]
-    assert not any(call[:2] == ["-m", "uvicorn"] for call in calls)
-
-
 def test_deploy_guide_and_template_cover_all_app_settings():
     documented = set(re.findall(r"`([A-Z_]+)`", (REPO_ROOT / "DEPLOY.md").read_text()))
     example = {
@@ -116,7 +95,4 @@ def test_deploy_guide_and_template_cover_all_app_settings():
     app_variables = {name.upper() for name in Settings.model_fields}
 
     assert app_variables <= example
-    assert example | app_variables | {"PYTHON_VERSION"} <= documented
-    blueprint = (REPO_ROOT / "render.yaml").read_text()
-    declared = set(re.findall(r"- key: ([A-Z_]+)", blueprint))
-    assert example - {"PORT"} <= declared  # PORT is supplied by Render itself.
+    assert example | app_variables <= documented

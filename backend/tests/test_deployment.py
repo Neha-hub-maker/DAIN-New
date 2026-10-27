@@ -6,12 +6,13 @@ from pathlib import Path
 import socket
 import subprocess
 import sys
+from unittest.mock import AsyncMock, Mock
 
 import httpx
 import pytest
 from sqlalchemy import create_engine, inspect, text
 
-from app.core.config import Settings
+from app.core.config import Settings, settings
 from app.main import app
 
 
@@ -113,6 +114,59 @@ def test_health_does_not_touch_database_or_providers(client, monkeypatch):
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "environment": "test"}
+
+
+@pytest.mark.parametrize("groq,tavily,expected", [
+    ("", "", (False, False)),
+    ("   ", "test-tavily", (False, True)),
+    ("test-groq", "", (True, False)),
+    ("test-groq", "test-tavily", (True, True)),
+])
+def test_readiness_reports_database_and_key_presence_only(client, monkeypatch, groq, tavily, expected):
+    check_database = Mock()
+    provider_http = AsyncMock(side_effect=AssertionError("Readiness must not call providers"))
+    monkeypatch.setattr("app.main.check_database_connection", check_database)
+    monkeypatch.setattr(httpx.AsyncClient, "send", provider_http)
+    monkeypatch.setattr(settings, "groq_api_key", groq)
+    monkeypatch.setattr(settings, "tavily_api_key", tavily)
+
+    response = client.get("/health/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "database": "ok", "groq_key_configured": expected[0], "tavily_key_configured": expected[1],
+    }
+    check_database.assert_called_once_with()
+    provider_http.assert_not_awaited()
+
+
+def test_readiness_database_failure_returns_503_without_details(client, monkeypatch):
+    private_details = "postgresql://private-user:private-password@database.example.test/dain test-secret-key"
+    check_database = Mock(side_effect=RuntimeError(private_details))
+    provider_http = AsyncMock(side_effect=AssertionError("Readiness must not call providers"))
+    monkeypatch.setattr("app.main.check_database_connection", check_database)
+    monkeypatch.setattr(httpx.AsyncClient, "send", provider_http)
+
+    response = client.get("/health/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {"database": "unavailable"}
+    assert private_details not in response.text
+    check_database.assert_called_once_with()
+    provider_http.assert_not_awaited()
+    assert client.get("/health").json() == {"status": "ok", "environment": "test"}
+    assert check_database.call_count == 1
+
+
+def test_readiness_uses_the_existing_database_check_with_local_sqlite(client, monkeypatch):
+    no_network = AsyncMock(side_effect=AssertionError("Readiness must not call providers"))
+    monkeypatch.setattr(httpx.AsyncClient, "send", no_network)
+
+    response = client.get("/health/ready")
+
+    assert response.status_code == 200
+    assert response.json()["database"] == "ok"
+    no_network.assert_not_awaited()
 
 
 def test_migrations_and_seed_are_repeatable_from_repo_root(tmp_path):

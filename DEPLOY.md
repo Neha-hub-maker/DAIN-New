@@ -1,132 +1,128 @@
 # Deployment
 
-The API uses Python **3.12.14** in both Render and Docker. Keep these pins together:
-`psycopg[binary]==3.2.3` does not provide Python 3.14 wheels. No credentials belong
-in Git, HTML, or a committed environment file. Configure secrets in the host dashboard.
+This repository has two deployments:
 
-## Dashboard settings
+- Frontend: https://neha-hub-maker.github.io/DAIN-New/ — root `index.html` and
+  `api-config.js`, published by `.github/workflows/deploy.yml` on every push to
+  `main`. GitHub Pages uses the Actions workflow, not a separate frontend host.
+- Backend: https://dain-new.vercel.app — this repository's `backend/` FastAPI app,
+  including `POST /submissions/verify`. Set the Vercel project's **Root Directory
+  to `backend`** and use its FastAPI/Python deployment support for `app/main.py`.
 
-`render.yaml` declares the template variables except `PORT`, which Render supplies
-automatically. Entries with
-`sync: false` must be supplied through the dashboard; secret values are never in
-the Blueprint. The safe defaults below are already declared in the Blueprint.
+`api-config.js` sets `window.DAIN_API_BASE = "https://dain-new.vercel.app"` before
+`index.html` starts the application. Keep this origin without a trailing slash or
+API path. No provider keys or database credentials belong in frontend files.
 
-| Variables | What to configure |
+## Vercel dashboard settings
+
+Set these for the backend's production environment. Environment changes require
+**a redeploy** before a running deployment uses them. Turn **Deployment Protection
+off for the API** so cross-origin health requests and OPTIONS preflights are not
+blocked by a platform sign-in page. Backend authentication remains required.
+
+| Variable | Value or source |
 | --- | --- |
-| `DATABASE_URL` | Your managed PostgreSQL connection URI, preferably the Render internal URL when colocated. `postgres://` and `postgresql://` are normalized to `postgresql+psycopg://`. URL-encode credentials; retain required TLS query parameters. |
-| `GROQ_API_KEY`, `TAVILY_API_KEY` | Dashboard secrets from [Groq](https://console.groq.com/keys) and [Tavily](https://app.tavily.com). Missing keys hold valid submissions as `verification_pending`. |
-| `GROQ_MODEL` | Default `openai/gpt-oss-120b`; ensure it is available to your account. |
-| `CORS_ORIGINS` | Comma-separated HTTPS frontend origins: scheme + hostname + optional port, without paths. Whitespace/trailing slashes are stripped and empty entries ignored. Do not use `*` or `null`. Local launch scripts use `http://localhost:3000`. |
-| `FORWARDED_ALLOW_IPS` | Uvicorn's comma-separated trusted ingress proxy IPs/CIDRs, obtained from the host. Required on Render; its startup command fails if this is empty. Docker/Compose default to loopback only for direct local use. Set the actual ingress addresses for hosted containers. |
-| `PORT` | Supplied by Render: do not replace it with a fixed dashboard value. Docker/Compose default to 8000 and respect overrides; Uvicorn always binds `0.0.0.0:$PORT`. |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM`, `SMTP_USE_SSL` | Your email provider's hostname, login, secret and authorized sender. Default port 587 with STARTTLS (`SMTP_USE_SSL=false`); use port 465 with `true` for implicit TLS. Required for production registration/verification emails. |
-| `APP_ENV`, `DEBUG`, `EXPOSE_VERIFICATION_TOKEN_IN_RESPONSE` | Keep `production`, `false`, `false`. Never expose email verification codes in production responses. |
-| `INSTITUTIONAL_EMAIL_DOMAIN` | Default `du.ac.bd`, including departmental subdomains. |
+| `DATABASE_URL` | Managed PostgreSQL connection URI from the database provider; store privately in the dashboard. URL-encode credentials and retain required TLS parameters. Standard PostgreSQL URLs select the installed psycopg 3 driver. |
+| `GROQ_API_KEY` | Dashboard secret from https://console.groq.com/keys. |
+| `TAVILY_API_KEY` | Dashboard secret from https://app.tavily.com. |
+| `GROQ_MODEL` | `openai/gpt-oss-120b`. |
+| `CORS_ORIGINS` | `https://neha-hub-maker.github.io` — origin only, **no `/DAIN-New/` path**. Comma-separated additional origins are supported when needed; whitespace/trailing slashes are removed. |
+| `APP_ENV` | `production`. |
+| `DEBUG` | `false`. |
+| `EXPOSE_VERIFICATION_TOKEN_IN_RESPONSE` | `false`. Verification codes must be delivered through email. |
+| `INSTITUTIONAL_EMAIL_DOMAIN` | `du.ac.bd`; departmental subdomains are accepted. |
+| `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM` | Your email provider's hostname, login, private password/app token and authorized sender. Required for production registration. |
+| `SMTP_PORT`, `SMTP_USE_SSL` | Provider settings: normally 587 / `false` for STARTTLS, or 465 / `true` for implicit TLS. |
 | `VERIFICATION_TOKEN_TTL_MINUTES`, `SESSION_TOKEN_TTL_MINUTES` | Defaults 60 and 1440. |
-| `MEDIA_ROOT`, `MAX_UPLOAD_SIZE_BYTES` | `/var/data/uploads`, 5242880 bytes. The Blueprint attaches a 1 GiB disk at `/var/data`, requiring a paid Render service. |
-| `PYTHON_VERSION` | Render runtime pin `3.12.14`. |
-| `POSTGRES_PASSWORD` | Local Compose only; unused by the hosted API. For Compose, supply this and a matching `DATABASE_URL` through your shell or private configuration outside Git. Use host `db:5432`, database `dain`, user `dain_user`. |
+| `MEDIA_ROOT`, `MAX_UPLOAD_SIZE_BYTES` | `/tmp/dain-uploads`, 5242880. Vercel's temporary files are ephemeral and not shared durable media storage. |
+
+Select a compatible Python runtime (3.12 or 3.13) in Vercel's project settings.
+`psycopg[binary]==3.2.3` has no Python 3.14 wheels. The local Docker image remains
+pinned to Python 3.12.14. The example template is `backend/.env.example`; do not
+commit environment files or credentials.
+
+`POSTGRES_PASSWORD`, `PORT` and `FORWARDED_ALLOW_IPS` in that template are for local
+Compose/Docker/Uvicorn only, not Vercel dashboard requirements. Compose needs a
+private database password and a matching `DATABASE_URL` using host `db:5432`, user
+`dain_user`, database `dain`. Its port defaults to 8000. Trust only known local
+proxy addresses when using Uvicorn; Vercel manages the production function listener.
 
 ## Deployment order
 
-1. Provision PostgreSQL, a persistent media disk and the email provider. Choose the
-   public frontend origin. Obtain the host's ingress proxy IPs/CIDRs and confirm
-   how it sanitizes/appends `X-Forwarded-For`; these cannot be inferred offline.
-2. Import `render.yaml` and fill in the dashboard settings **before deployment**:
-   database, SMTP, provider keys, frontend CORS origins and trusted proxy addresses.
-   Keep the production safety defaults. Let the host supply `PORT`.
-3. Deploy the backend from `backend/`. Startup must complete, in order:
-   `alembic upgrade head` → `python -m app.db.seed` → Uvicorn with `--host 0.0.0.0`,
-   `--port "$PORT"`, `--proxy-headers`, `--forwarded-allow-ips "$FORWARDED_ALLOW_IPS"`.
-   The `&&` chain stops startup and logs an error if migrations cannot connect or
-   seeding fails; it never serves an unmigrated app. Back up an existing database
-   before upgrading. Do not suppress migration errors or use `--sql` on deployment.
-4. Confirm the process-only `/health` returns HTTP 200 with `status: "ok"` and the
-   host routes to it. It never touches the database, Groq or Tavily. A healthy
-   response alone does not establish database/provider availability; check the
-   migration logs and authenticated API smoke tests separately.
-5. Set `window.DAIN_API_BASE` in the root `api-config.js` to the API's HTTPS base
-   URL (origin only; no `/docs`, `/health`, or API path). This is public frontend
-   configuration; never place provider/database keys here. The localhost fallback
-   is only used on `localhost`, `127.0.0.1`, or `[::1]`. Static hosts do not substitute
-   dashboard environment variables into static files.
-6. Publish the frontend. Confirm a JSON POST preflight to `/submissions/verify`
-   succeeds from its exact origin, allowing `POST`, `OPTIONS`, `Content-Type` and
-   `Authorization`. Then run the authenticated smoke tests below. For Docker, the
-   same migrations/seeding run before Uvicorn. Compose waits for PostgreSQL
-   readiness and stores database/media in named volumes. CI needs no env file.
+1. Provision PostgreSQL and SMTP delivery. Configure the Vercel project from this
+   repository with **Root Directory = `backend`**, the dashboard variables above,
+   a compatible Python runtime and API Deployment Protection off.
+2. Migrate the database once before serving requests. From a trusted environment
+   with `DATABASE_URL` set privately, run from `backend/`:
 
-Uvicorn converts `X-Forwarded-For` to the ASGI client address only when the
-connecting peer is trusted. The route limits that resolved address, never raw
-forwarding headers. For multiple proxies, list all trusted hops; Uvicorn selects
-the first untrusted address from the right, avoiding caller-injected leftmost
-addresses. Do not set `FORWARDED_ALLOW_IPS=*` on a directly reachable backend.
-Wildcard trust is appropriate only if the host guarantees every connection comes
-from trusted ingress and sanitizes client-supplied forwarding headers. Confirm
-this with the host rather than guessing a production trust range.
+   ```bash
+   python -m pip install -r requirements.txt
+   python -m alembic upgrade head
+   python -m app.db.seed
+   ```
 
-A placeholder API URL or an HTTP API on an HTTPS frontend prevents connectivity;
-configure the actual HTTPS base URL, without `/docs`. A 401/403 with CORS headers
-means authentication is required; a 429 means a rate-limit bucket was exhausted.
-Neither is a CORS failure. Confirm the deployed artifact contains the configured
-URL and the host dashboard contains the frontend origin and proxy trust setting.
+   Do not run migrations per serverless invocation or suppress connection errors.
+   Run `alembic upgrade head` again for later schema changes; back up existing data
+   before upgrades. No database connection or migration was run against production
+   while preparing these changes.
+3. Deploy/redeploy the Vercel backend. Check `https://dain-new.vercel.app/health`
+   for process liveness. Check `https://dain-new.vercel.app/health/ready` for database
+   readiness: HTTP 200 contains `database: "ok"` and key-presence booleans; HTTP 503
+   contains only `database: "unavailable"`. Readiness never contacts Groq/Tavily or
+   returns exception text, database URLs or keys. A configured key is not proof
+   that a provider account/quota works.
+4. Merge the frontend configuration to `main`. GitHub Actions automatically
+   publishes `index.html`, `api-config.js` and assets to the GitHub Pages address
+   above. There is no frontend build-time secret substitution. Confirm the new
+   artifact loads `api-config.js` relative to `/DAIN-New/`.
+5. Run the smoke checks below. A platform login/redirect means API Deployment
+   Protection must be disabled. HTTP 401/403 with CORS headers means backend
+   authentication is required; HTTP 429 means a rate limit, not a CORS failure.
 
-## Post-deploy smoke tests
+## Smoke tests
 
-Run the standard-library connectivity script from the repository root:
+With an existing verified DU user's session token in `DAIN_SMOKE_TOKEN` and the
+matching email in `DAIN_SMOKE_EMAIL`, run from the repository root:
 
-```text
-python scripts/smoke_test.py <backend_url> <frontend_origin>
+```bash
+python scripts/smoke_test.py https://dain-new.vercel.app https://neha-hub-maker.github.io
 ```
 
-Use the backend's public HTTP(S) base URL and the frontend's origin without a
-repository path. Set `DAIN_SMOKE_TOKEN` to an existing verified user's login
-session token and `DAIN_SMOKE_EMAIL` to that account's email in the process
-environment before running; no environment file or Groq/Tavily keys are needed.
-Do not put a token in the command arguments or commit it. With missing auth,
-health/CORS still run and the third check reports FAIL with setup instructions.
+Do not put tokens in command arguments, Git or environment files. The script uses
+only Python's standard library, prints PASS/FAIL for health, a JSON/Bearer OPTIONS
+preflight to `/submissions/verify`, and authenticated gibberish rejection, and
+exits nonzero on failure. With missing auth the third check fails with setup
+instructions. It never prints tokens, response bodies or raw exceptions, and
+refuses redirects. An identity rejection cannot falsely pass the content check.
 
-The script prints PASS/FAIL for health (HTTP 200), the JSON/Bearer OPTIONS
-preflight's exact allowed origin, and authenticated gibberish rejection. It exits
-nonzero on any failure and never prints credentials, response bodies or raw
-network exceptions. Redirects are refused to avoid forwarding a session token.
-The gibberish check requires reason `insufficient_content`, so an identity
-rejection cannot falsely pass. It uses no Groq/Tavily credits, but counts as one
-request against the five-per-minute verification limit.
+For manual checks, register, verify the emailed code and log in through the UI or
+`/docs`; never enable debug/token exposure to bypass verification. Submit valid
+form fields and a past achievement date:
 
-These are operator steps; they were **not run against live providers** for this PR.
-The two real-story tests spend provider credits. Use `/docs` to register a DU
-account, complete `/auth/verify-email` with the code received by email, log in,
-and authorize with the returned Bearer token. Do not enable debug/token exposure
-to bypass email verification. Also confirm an unauthenticated verification request
-returns 401 and a CORS preflight from the deployed frontend permits its origin and
-the `Authorization`/`Content-Type` headers.
+| Case | Expected result |
+| --- | --- |
+| Gibberish: headline `CCCCCCCCCCCC`, summary `CCCCCCCCCCCC CCCCCCCCCCCC CCCCCCCCCCCC`. | `rejected`, reason `insufficient_content`, no Groq/Tavily calls. The script exercises this exact pre-check. |
+| A genuine achievement with a public evidence link. | Claims and stages; only sufficiently evidenced claims produce `verified`. Otherwise `needs_review`, or `rejected` for contradictions. |
+| A genuine achievement with an empty evidence link. | Search still runs. `unverified` means `needs_review`, not false. Fully evidenced claims may still be `verified`. |
 
-POST `/submissions/verify` with the story fields: `headline` (10–120), `summary`
-(30–600), `category` (e.g. `Academic`), `subType`, `institution`, `impact`,
-`achievementDate` (past ISO date), `authorEmail` (the authenticated DU email), and
-`evidenceLink` (HTTPS URL, or `""` when absent). Use genuine, specific achievements
-for cases 2 and 3; public evidence is assessed, never assumed to exist.
+Real-story checks use provider credits and were not performed here. Missing keys,
+provider errors or deadlines yield `verification_pending`; only verified content
+passes routing. The gibberish check uses no provider credits but counts toward
+five verification requests per minute per IP.
 
-| Case | Input | Expected result |
-| --- | --- | --- |
-| 1. Gibberish | Headline `CCCCCCCCCCCC`; summary `CCCCCCCCCCCC CCCCCCCCCCCC CCCCCCCCCCCC`; all other required fields valid. | HTTP 200, `rejected`, reason `insufficient_content`, editorial `failed`, routing `skipped`. No Groq/Tavily calls. |
-| 2. Real story with a link | A coherent achievement and a genuine public evidence URL. | Structured `claims` and three `stages`; `verified` only when every claim is verified with confidence ≥0.7. Insufficient evidence may yield `needs_review`; contradicted evidence yields `rejected`. |
-| 3. Real story without a link | A coherent achievement with `evidenceLink: ""`. | Search still runs. `unverified` is normal and yields `needs_review`, not a falsehood/rejection. A fully evidenced result may be `verified`. |
+## Serverless limits
 
-For either real story, `verification_pending` means check provider keys, quotas,
-timeouts or availability. Only `verified` may have routing `passed`; other results
-remain unpublished. The per-IP limit is five verification requests per minute
-(HTTP 429 with `Retry-After`); space out retries.
+Vercel has request time limits depending on the plan and function configuration.
+Ensure its function duration supports the verifier's 25-second overall timeout;
+the frontend waits up to 40 seconds. A platform timeout may occur first and must
+leave the story Pending Review. These limits were not checked against the live
+project.
 
-## Current application limits
-
-The static UI still has demo sessions and localStorage stories/editor approvals;
-these are not server authorization or durable publication. Its registration view
-does not complete email verification; use the API flow above for authenticated
-smoke tests. Do not treat this deployment configuration as completion of those
-product workflows. The API verification limiter is process-local; keep one worker
-and instance until a shared limiter is added for scaling.
+The in-memory limiter may be shared across requests using one warm function (and
+clients presented with the same proxy IP). It resets on cold starts and is not a
+global quota across function instances. Its current behavior is unchanged. Durable
+media storage and shared rate limiting need separate work for scaling. Static
+stories/editor approvals remain browser-local prototype workflows.
 
 ## Offline regression checks
 
@@ -134,10 +130,11 @@ and instance until a shared limiter is added for scaling.
 python -m unittest discover -s tests -p 'test_smoke_test.py'
 node --test tests/*.test.cjs
 node --test tests/verification.browser.cjs
+cd backend
+.venv/bin/python -m pytest -q tests
 ```
 
-The browser suite uses Playwright and Chromium, which must already be installed
-in the test environment. It uses a system `/usr/bin/chromium` when available,
-otherwise Playwright's installed Chromium; `DAIN_CHROMIUM_PATH` can select another
-browser executable. Every HTTP request is intercepted, including assets, health
-and verification requests. Smoke-script tests mock HTTP and prohibit sockets.
+The browser suite requires installed Playwright and Chromium; `DAIN_CHROMIUM_PATH`
+can select an installed browser executable. All HTTP, including requests using the
+production addresses, is intercepted in browser/smoke tests. Provider HTTP is
+mocked in backend tests; local SQLite is used instead of a production database.

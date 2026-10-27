@@ -1,4 +1,4 @@
-# Local development only. Production hosting settings are in render.yaml / DEPLOY.md.
+# Local development only. Vercel production settings are documented in DEPLOY.md.
 services:
   api:
     build:

@@ -1891,7 +1891,7 @@
         } catch (error) {
           const message = error?.name === "AbortError"
             ? "Sign-in timed out. Please try again."
-            : "Could not reach the sign-in server. Check the backend status, CORS settings, and Render logs.";
+            : "Could not reach the sign-in server. Check the backend status, CORS settings, and Vercel logs.";
           showToast(message, "error");
         } finally {
           clearTimeout(timeout);
@@ -1945,7 +1945,7 @@
             } else if (response.status === 422) {
               showToast(detail || "The details were not accepted. Use a valid DU institutional email and a password of at least 12 characters.", "error");
             } else if (response.status >= 500) {
-              showToast("Registration failed on the server. Email verification may not be configured. Ask the administrator to check Render logs and SMTP settings.", "error");
+              showToast("Registration failed on the server. Email verification may not be configured. Ask the administrator to check Vercel logs and SMTP settings.", "error");
               console.error("DAIN registration server error", { status: response.status });
             } else {
               showToast(detail || `Registration failed (server returned ${response.status}).`, "error");
@@ -1961,7 +1961,7 @@
         } catch (error) {
           const message = error?.name === "AbortError"
             ? "Registration timed out. Please try again or contact the site administrator."
-            : "Could not reach the registration server. Check backend status, CORS settings, and Render logs.";
+            : "Could not reach the registration server. Check backend status, CORS settings, and Vercel logs.";
           showToast(message, "error");
           console.error("DAIN registration request failed", {
             type: error instanceof TypeError ? "network_or_cors" : (error?.name || "Error")

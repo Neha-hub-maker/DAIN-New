@@ -29,7 +29,10 @@ function loadRegistration(email) {
     institution: "University of Dhaka",
   };
   const context = vm.createContext({
-    API_BASE: "http://127.0.0.1:8000",
+    API_BASE: "https://dain-new.vercel.app",
+    AbortController, setTimeout, clearTimeout,
+    pendingRegistrationEmail: "",
+    setAuthTab() {},
     pipelineBusy: false,
     sessionStorage: { removeItem() {}, setItem() {} },
     document: {
@@ -37,13 +40,20 @@ function loadRegistration(email) {
         if (!elements.has(id)) elements.set(id, {
           value: values[id],
           classList: { toggle(_name, hidden) { this.hidden = hidden; } },
+          focus() {},
+          querySelector() {
+            return { innerHTML: "<span>Submit</span>", disabled: false, querySelector() { return { textContent: "" }; } };
+          },
         });
         return elements.get(id);
       },
     },
     async fetch(url, options) {
       requests.push({ url, body: JSON.parse(options.body) });
-      return { ok: true, async json() { return { access_token: "test-session-token" }; } };
+      return { ok: true, async json() { return {
+        access_token: "test-session-token",
+        user: { email: email.trim(), full_name: "Test Student", role: "user", is_email_verified: true }
+      }; } };
     },
     showToast() {},
     completeAuthSuccess() {},
@@ -93,8 +103,8 @@ for (const [allowed, emails] of [[true, accepted], [false, rejected]]) {
       await context.handleLoginSubmit({ preventDefault() {} });
       assert.equal(requests.length, allowed ? 2 : 0);
       if (allowed) {
-        assert.ok(requests[0].url.endsWith("/auth/register"));
-        assert.ok(requests[1].url.endsWith("/auth/login"));
+        assert.equal(requests[0].url, "https://dain-new.vercel.app/auth/register");
+        assert.equal(requests[1].url, "https://dain-new.vercel.app/auth/login");
         assert.equal(requests[0].body.email, email.trim());
         assert.equal(requests[1].body.email, email.trim());
       }

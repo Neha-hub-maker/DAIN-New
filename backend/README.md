@@ -20,7 +20,7 @@ Production registration requires SMTP delivery configured through the host dashb
 
 ### 1. Install prerequisites
 
-- Python 3.12 (the deployment pin is 3.12.14): verify with `py --version`
+- Python 3.12 (local Docker uses 3.12.14; Vercel supports a compatible 3.12/3.13 runtime): verify with `py --version`
 - PostgreSQL 16 or newer: verify with `psql --version`
 
 ### 2. Create the database
@@ -79,7 +79,7 @@ python -m uvicorn app.main:app --reload
 
 From the repository root, run `node --test tests/email-validation.test.cjs` to check frontend email validation across registration, login, and story submission. These checks use Node's built-in test runner and require no npm packages.
 
-Open `http://127.0.0.1:8000/docs`. `GET /health` reports process liveness without database or provider calls; database connectivity is required by deployment migrations and authenticated API operations.
+Production uses this repository on Vercel at `https://dain-new.vercel.app` with Root Directory `backend`; see [DEPLOY.md](../DEPLOY.md). Locally, open `http://127.0.0.1:8000/docs`. `GET /health` reports process liveness without database or provider calls. `GET /health/ready` checks database connectivity and returns key-presence booleans without exposing secrets; database failure returns HTTP 503.
 
 ## Environment variables
 
@@ -146,9 +146,9 @@ Headline and summary limits match the HTML form. Other text fields have server-s
 
 The response always has `status`, `reason`, `claims`, and three `stages`, in identity/editorial/routing order. Each claim has `text`, `verdict`, `confidence`, and `sources`; each stage has `id`, `status`, and `detail`. Editorial is `passed` for verified content, `failed` for rejected content, and `held` for needs-review or pending results. Routing is `passed` only when verified; it means ready for routing, without performing distribution.
 
-Authenticated requests with a valid body are limited to five per IP in a sliding 60-second window. Excess requests return HTTP 429 and `Retry-After` before paid calls. Uvicorn resolves `X-Forwarded-For` only from the ingress proxy addresses configured in `FORWARDED_ALLOW_IPS`; the route uses that ASGI client address and never parses raw caller headers. See [DEPLOY.md](../DEPLOY.md) for the trust boundary and startup settings. The simple limiter is process-local and resets on restart. Multiple workers/replicas would need a shared limiter for a global quota.
+Authenticated requests with a valid body are limited to five per IP in a sliding 60-second window. Excess requests return HTTP 429 and `Retry-After` before paid calls. For local Docker/Uvicorn, `FORWARDED_ALLOW_IPS` controls trusted proxy headers; the route uses the ASGI client address and never parses raw caller headers. Vercel manages the production serverless ingress. The in-memory limiter may be shared by requests reaching one warm instance/proxy IP and resets on cold starts; it is not global across instances. See [DEPLOY.md](../DEPLOY.md) for serverless limits.
 
-Both `Launch_DAIN_Platform.bat` and `Launch_FullStack.bat` start Python's static server on port 3000 and open `http://localhost:3000/index.html`. `Launch_DAIN_Dev.bat` launches development tools only. Use the HTTP URL for development: opening the HTML directly produces the unsupported `null` origin. `backend/.env.example` lists the supported development origins; the default configuration has no CORS wildcard. No real `.env` is needed for route tests.
+Both `Launch_DAIN_Platform.bat` and `Launch_FullStack.bat` start Python's static server on port 3000 and open `http://localhost:3000/index.html`. `Launch_DAIN_Dev.bat` launches development tools only. Use the HTTP URL for development: opening the HTML directly produces the unsupported `null` origin. `backend/.env.example` specifies the production GitHub Pages origin; for local development override `CORS_ORIGINS` with `http://localhost:3000,http://127.0.0.1:3000`. The default settings have no CORS wildcard. No real `.env` is needed for route tests.
 
 ## Security notes
 

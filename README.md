@@ -34,21 +34,14 @@ DAIN systematically identifies, documents, verifies, and amplifies the achieveme
 
 This is an **ultra-lightweight static web application (0 MB `node_modules`)** styled with the **Google Stitch Dark Theme** and **Tailwind CSS**.
 
-### 1. Deploying to Vercel (Instant 1-Click)
-- Import this GitHub repository into [Vercel](https://vercel.com).
-- **Framework Preset**: `Other`
-- **Build Command**: *(leave empty)*
-- **Output Directory**: `.` *(current directory)*
-- **Environment Variables**: No frontend secrets. Configure the public API URL in `index.html` and deploy the backend as described in [DEPLOY.md](DEPLOY.md).
+The frontend is published to **https://neha-hub-maker.github.io/DAIN-New/** by
+[the GitHub Pages workflow](.github/workflows/deploy.yml) on every push to `main`.
+GitHub Pages must use GitHub Actions as its publishing source.
 
-### 2. Deploying to Netlify
-- Import this GitHub repository into [Netlify](https://netlify.com).
-- **Publish directory**: `.` *(root)*
-- **Build command**: *(leave empty)*
-
-### 3. Deploying to GitHub Pages
-- Go to repository **Settings** &rarr; **Pages**.
-- Source: **Deploy from a branch** &rarr; Branch: `main` &rarr; Folder: `/ (root)`.
+This repository's `backend/` is deployed separately on Vercel at
+**https://dain-new.vercel.app**, with **Root Directory = `backend`**. The root
+`api-config.js` points the frontend to that API. See [DEPLOY.md](DEPLOY.md) for
+backend dashboard settings, migrations, readiness and smoke checks.
 
 ---
 
@@ -71,7 +64,7 @@ never commit local environment files or real keys. The template uses production
 safety settings; local development instructions are in [backend/README.md](backend/README.md).
 The static frontend's public API URL is configured in the root `api-config.js` file
 with `window.DAIN_API_BASE`; host environment variables are not automatically
-substituted into static files. Set it to the public backend origin (without `/docs`,
+substituted into static files. Keep it set to `https://dain-new.vercel.app` (without `/docs`,
 `/health`, or API paths). Keep all provider/database secrets on the backend only.
 
 ## 🏛️ Brand & Governance
