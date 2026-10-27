@@ -315,9 +315,7 @@ def test_cors_for_served_frontend_and_file_origin(client, mocked_verifier, origi
     mocked_verifier.assert_not_awaited()
 
 
-def test_example_cors_covers_launch_script_origin():
+def test_example_cors_uses_the_github_pages_origin_without_a_path():
     path = Path(__file__).resolve().parents[1] / ".env.example"
     configured = Settings(_env_file=path)
-    origins = {origin.strip() for origin in configured.cors_origins.split(",")}
-    assert {"http://localhost:3000", "http://127.0.0.1:3000"} <= origins
-    assert "null" not in origins and "*" not in origins
+    assert configured.cors_origin_list == ["https://neha-hub-maker.github.io"]

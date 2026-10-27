@@ -8,8 +8,9 @@ const {chromium} = require('playwright');
 
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-const FRONTEND = 'https://frontend.example.test';
-const API = 'https://api.example.test';
+const FRONTEND = 'https://neha-hub-maker.github.io';
+const API = 'https://dain-new.vercel.app';
+const apiConfig = fs.readFileSync(path.join(root, 'api-config.js'), 'utf8');
 const EMAIL = 'student@cs.du.ac.bd';
 const HEADLINE = 'PRIVATE_STORY_MARKER robotics team award';
 const SUMMARY = 'PRIVATE_SUMMARY_MARKER university students won the national robotics competition.';
@@ -36,7 +37,6 @@ async function fixture(t, options={}) {
   let healthCount = 0;
   page.on('pageerror', error => errors.push(error.message));
   await context.addInitScript(({API, EMAIL, options}) => {
-    window.DAIN_API_BASE = API;
     localStorage.setItem('dain_user', JSON.stringify({name:'Test Student', email:EMAIL, role:'Student', institution:'University of Dhaka', isVerified:true, isLoggedIn:true}));
     localStorage.setItem('dain_stories', '[]');
     sessionStorage.setItem('dain_api_session', JSON.stringify({email:EMAIL, token:'browser-test-token'}));
@@ -85,13 +85,14 @@ async function fixture(t, options={}) {
       const body = options.mode === 'invalid_json' ? 'not json' : options.mode === 'invalid_schema' ? '{}' : options.mode === 'http' ? '{"detail":"DO_NOT_LOG_RESPONSE browser-test-token"}' : JSON.stringify(result(options.status));
       return route.fulfill({status:options.httpStatus || 200, headers:options.mode === 'cors' ? {'access-control-allow-origin':'https://unlisted.example.test'} : cors, contentType:'application/json', body});
     }
-    if (url.origin === FRONTEND && url.pathname === '/index.html') return route.fulfill({contentType:'text/html', body:html});
+    if (url.origin === FRONTEND && url.pathname === '/DAIN-New/index.html') return route.fulfill({contentType:'text/html', body:html});
+    if (url.origin === FRONTEND && url.pathname === '/DAIN-New/api-config.js') return route.fulfill({contentType:'text/javascript', body:apiConfig});
     if (url.host === 'cdn.tailwindcss.com') return route.fulfill({contentType:'text/javascript', body:'window.tailwind={};'});
     if (url.pathname.endsWith('.png')) return route.fulfill({contentType:'image/png', body:fs.readFileSync(path.join(root, 'assets/dunite-logo.png'))});
     if (url.pathname.endsWith('.woff2')) return route.fulfill({contentType:'font/woff2', body:fs.readFileSync(path.join(root, 'assets/fonts/ProductSans-Regular.woff2'))});
     return route.fulfill({contentType:'text/css', body:'.hidden{display:none!important}'});
   });
-  await page.goto(FRONTEND + '/index.html#submit', {waitUntil:'domcontentloaded'});
+  await page.goto(FRONTEND + '/DAIN-New/index.html#submit', {waitUntil:'domcontentloaded'});
   await page.waitForFunction(() => document.querySelector('#view-submit').classList.contains('active'));
   return {page, errors, calls};
 }

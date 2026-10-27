@@ -1,12 +1,13 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.routes.auth import router as auth_router
 from app.routes.dain import router as dain_router
 from app.db.base import Base
-from app.db.session import engine, is_sqlite
+from app.db.session import check_database_connection, engine, is_sqlite
 import app.models as _models  # noqa: F401
 
 
@@ -60,4 +61,17 @@ def health_check() -> dict[str, str]:
         "status": "ok",
         "environment": settings.app_env,
     }
-    
+
+
+@app.get("/health/ready", tags=["system"])
+def readiness_check() -> JSONResponse:
+    """Check database readiness and key presence without contacting providers."""
+    try:
+        check_database_connection()
+    except Exception:
+        return JSONResponse(status_code=503, content={"database": "unavailable"})
+    return JSONResponse(content={
+        "database": "ok",
+        "groq_key_configured": bool(settings.groq_api_key.strip()),
+        "tavily_key_configured": bool(settings.tavily_api_key.strip()),
+    })

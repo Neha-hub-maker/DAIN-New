@@ -15,8 +15,8 @@ from urllib.request import Request
 from scripts import smoke_test
 
 
-BASE = "https://api.example.test"
-ORIGIN = "https://frontend.example.test"
+BASE = "https://dain-new.vercel.app"
+ORIGIN = "https://neha-hub-maker.github.io"
 TOKEN = "synthetic-session-token-never-print"
 EMAIL = "student@cs.du.ac.bd"
 REJECTION = {"status": "rejected", "reason": "insufficient_content", "claims": []}
@@ -75,7 +75,7 @@ class SmokeTests(unittest.TestCase):
 
     def test_origin_normalization(self):
         for raw, expected in [
-            ("HTTPS://FRONTEND.example.test:443///", ORIGIN),
+            ("HTTPS://NEHA-HUB-MAKER.GITHUB.IO:443///", ORIGIN),
             ("http://localhost:3000/", "http://localhost:3000"),
             ("http://localhost:80/", "http://localhost"),
             ("http://[::1]:3000/", "http://[::1]:3000"),
