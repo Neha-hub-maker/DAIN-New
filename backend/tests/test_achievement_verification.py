@@ -494,11 +494,17 @@ def test_failed_extraction_is_diagnosed_and_keeps_claims(providers, caplog):
         if str(request.url) == verification.TAVILY_EXTRACT_URL:
             return httpx.Response(200, json={"results": [], "failed_results": [{"url": EVIDENCE_LINK, "error": "Unavailable"}]})
     providers.override = failed
+    providers.assessments[CLAIM] = {"claim": CLAIM, "verdict": "unverified", "confidence": 0.55, "sources": []}
     result = verify(evidence_link=EVIDENCE_LINK)
-    assert result["reason"] == "invalid_api_response"
-    assert result["claims"] == [unfinished_claim()]
+    assert result["status"] == "needs_review"
+    assert result["reason"] == "insufficient_evidence; evidence_link_unreadable"
+    assert result["claims"] == [{"text": CLAIM, "verdict": "unverified", "confidence": 0.55, "sources": [SOURCE]}]
+    assert len(providers.calls(verification.GROQ_URL)) == 2
+    assessment = untrusted_payload(providers.calls(verification.GROQ_URL)[1])
+    assert [item["url"] for item in assessment["evidence"]] == [SOURCE]
     assert "step=tavily.extract.results reason=empty_list" in caplog.text
-    assert "step=tavily.extract.failed_results reason=extraction_failed" in caplog.text
+    assert "step=tavily.extract.failed_results reason=evidence_link_unreadable" in caplog.text
+    assert "invalid_api_response" not in result["reason"]
     assert EVIDENCE_LINK not in "\n".join(record.getMessage() for record in service_warnings(caplog))
 
 
@@ -700,3 +706,103 @@ def test_model_schema_diagnostics_report_the_actual_http_status(providers, caplo
     providers.override = created_but_invalid
     assert verify()["reason"] == "invalid_api_response"
     assert f"step={phase}.schema reason=pydantic_validation http_status=201" in caplog.text
+
+
+@pytest.mark.parametrize("failed_results", [[], [{"url": EVIDENCE_LINK, "error": "Login required"}]])
+@pytest.mark.parametrize("search_url", [
+    EVIDENCE_LINK, EVIDENCE_LINK + "/", EVIDENCE_LINK + "?tracking=1#section",
+    EVIDENCE_LINK.replace("https:", "http:"),
+])
+def test_unreadable_link_cannot_verify_from_search_hits_for_the_same_page(providers, failed_results, search_url):
+    providers.search_results[CLAIM] = [{"url": search_url, "content": "An award announcement."}]
+    providers.assessments[CLAIM] = {"claim": CLAIM, "verdict": "verified", "confidence": 0.9, "sources": [search_url]}
+
+    async def unreadable(request):
+        if str(request.url) == verification.TAVILY_EXTRACT_URL:
+            return httpx.Response(200, json={"results": [], "failed_results": failed_results})
+    providers.override = unreadable
+    result = verify(evidence_link=EVIDENCE_LINK)
+    assert result["status"] == "needs_review"
+    assert result["reason"] == "evidence_link_unreadable"
+    assert result["claims"][0] == {"text": CLAIM, "verdict": "verified", "confidence": 0.9, "sources": [search_url]}
+    assert len(providers.calls(verification.GROQ_URL)) == 2
+
+
+def unreadable_extract(request):
+    if str(request.url) == verification.TAVILY_EXTRACT_URL:
+        return httpx.Response(200, json={"results": [], "failed_results": [{"url": EVIDENCE_LINK, "error": "Unavailable"}]})
+
+
+@pytest.mark.parametrize("verdict,confidence,sources,status", [
+    ("unverified", 0.6, [], "needs_review"),
+    ("unverified", 0.6, [SOURCE], "needs_review"),
+    ("verified", 0.69, [SOURCE], "needs_review"),
+    ("verified", 0.9, [], "needs_review"),  # Candidate links are not model citations.
+    ("verified", 0.9, ["https://invented.example.org/proof"], "needs_review"),
+    ("verified", 0.7, [SOURCE], "verified"),
+    ("contradicted", 0.9, [SOURCE], "rejected"),
+])
+def test_unreadable_link_preserves_search_evidence_and_verdict_rules(providers, verdict, confidence, sources, status):
+    async def unreadable(request):
+        return unreadable_extract(request)
+    providers.override = unreadable
+    providers.assessments[CLAIM] = {"claim": CLAIM, "verdict": verdict, "confidence": confidence, "sources": sources}
+    result = verify(evidence_link=EVIDENCE_LINK)
+    assert result["status"] == status
+    assert "evidence_link_unreadable" in result["reason"]
+    assert "invalid_api_response" not in result["reason"]
+    assert result["claims"] == [{"text": CLAIM, "verdict": verdict, "confidence": confidence, "sources": [SOURCE]}]
+
+
+def test_unreadable_link_requires_independent_support_for_every_claim(providers):
+    providers.extraction["claims"] = [CLAIM, SECOND_CLAIM]
+    providers.search_results[SECOND_CLAIM] = [{"url": EVIDENCE_LINK, "content": "Grant announcement."}]
+    providers.assessments[SECOND_CLAIM] = {"claim": SECOND_CLAIM, "verdict": "verified", "confidence": 0.95, "sources": [EVIDENCE_LINK]}
+
+    async def unreadable(request):
+        return unreadable_extract(request)
+    providers.override = unreadable
+    result = verify(evidence_link=EVIDENCE_LINK)
+    assert result["status"] == "needs_review"
+    assert result["reason"] == "evidence_link_unreadable"
+    assert [claim["sources"] for claim in result["claims"]] == [[SOURCE], [EVIDENCE_LINK]]
+    assert [claim["confidence"] for claim in result["claims"]] == [0.9, 0.95]
+    assert len(providers.calls(verification.GROQ_URL)) == 3
+
+
+def test_search_hit_without_content_cannot_override_an_unreadable_link(providers):
+    providers.search_results[CLAIM] = [{"url": SOURCE, "title": "Award", "content": "", "raw_content": None}]
+
+    async def unreadable(request):
+        return unreadable_extract(request)
+    providers.override = unreadable
+    result = verify(evidence_link=EVIDENCE_LINK)
+    assert result["status"] == "needs_review"
+    assert result["claims"][0]["sources"] == [SOURCE]
+
+
+def test_empty_searches_and_failed_extract_are_needs_review_not_pending(providers):
+    providers.search_results[CLAIM] = []
+    providers.assessments[CLAIM] = {"claim": CLAIM, "verdict": "unverified", "confidence": 0.1, "sources": []}
+
+    async def unreadable(request):
+        return unreadable_extract(request)
+    providers.override = unreadable
+    result = verify(evidence_link=EVIDENCE_LINK)
+    assert result == {
+        "status": "needs_review", "reason": "insufficient_evidence; evidence_link_unreadable",
+        "claims": [{"text": CLAIM, "verdict": "unverified", "confidence": 0.1, "sources": []}],
+    }
+
+
+def test_real_assessment_api_failure_remains_pending_after_an_unreadable_link(providers):
+    async def fail_assessment(request):
+        if str(request.url) == verification.GROQ_URL and "claim" in untrusted_payload(request):
+            return httpx.Response(500, json={"error": "Service unavailable"})
+        return unreadable_extract(request)
+    providers.override = fail_assessment
+    result = verify(evidence_link=EVIDENCE_LINK)
+    assert result["status"] == "verification_pending"
+    assert result["reason"] == "api_error; evidence_link_unreadable"
+    assert result["claims"] == [{"text": CLAIM, "verdict": "unverified", "confidence": 0.0, "sources": [SOURCE]}]
+    assert len(providers.calls(verification.GROQ_URL)) == 2

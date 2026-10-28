@@ -108,6 +108,23 @@ def test_snake_case_field_names_are_supported(client, auth_headers, mocked_verif
     mocked_verifier.assert_awaited_once()
 
 
+@pytest.mark.parametrize("status,editorial,routing", [("needs_review", "held", "skipped"), ("verified", "passed", "passed")])
+def test_unreadable_link_note_keeps_claim_evidence_and_correct_stages(client, auth_headers, mocked_verifier, status, editorial, routing):
+    reason = "insufficient_evidence; evidence_link_unreadable" if status == "needs_review" else "claims_verified; evidence_link_unreadable"
+    claim = {**CLAIM, "verdict": "unverified" if status == "needs_review" else "verified", "confidence": 0.6 if status == "needs_review" else 0.9}
+    mocked_verifier.return_value = {"status": status, "reason": reason, "claims": [claim]}
+
+    response = client.post(ENDPOINT, headers=auth_headers, json=story_payload())
+
+    assert response.status_code == 200
+    body = response.json()
+    assert set(body) == {"status", "reason", "claims", "stages"}
+    assert body["status"] == status and body["reason"] == reason and body["claims"] == [claim]
+    assert [(stage["id"], stage["status"]) for stage in body["stages"]] == [
+        ("identity", "passed"), ("editorial", editorial), ("routing", routing),
+    ]
+
+
 @pytest.mark.parametrize("email,reason", [("student@example.org", "invalid_institutional_email"), ("other@mis.du.ac.bd", "author_email_mismatch")])
 def test_failed_identity_skips_paid_verification(client, auth_headers, mocked_verifier, email, reason):
     response = client.post(ENDPOINT, headers=auth_headers, json=story_payload(authorEmail=email))
