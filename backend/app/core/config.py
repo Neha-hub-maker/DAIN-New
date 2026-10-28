@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./dain.db"
     institutional_email_domain: str = "du.ac.bd"
     app_env: str = "development"
-    debug: bool = True
+    debug: bool = False
 
     groq_api_key: str = ""
     groq_model: str = "openai/gpt-oss-120b"
@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     smtp_use_ssl: bool = False
     verification_token_ttl_minutes: int = 60
     session_token_ttl_minutes: int = 1440
-    expose_verification_token_in_response: bool = True
+    expose_verification_token_in_response: bool = False
     media_root: str = "uploads"
     max_upload_size_bytes: int = 5_242_880
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000"
