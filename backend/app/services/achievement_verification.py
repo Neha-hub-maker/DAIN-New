@@ -8,7 +8,7 @@ import secrets
 from datetime import date, datetime, timezone
 from dataclasses import dataclass, field
 from typing import Annotated, Literal
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter, ValidationError, field_validator
@@ -119,6 +119,10 @@ class InvalidAPIResponse(ValueError):
 class VerificationProgress:
     claims: list[VerifiedClaim] = field(default_factory=list)
     step: str = "precheck"
+    evidence_link_unreadable: bool = False
+    evidence_link: str | None = None
+    search_evidence: list[list[TavilyResult]] = field(default_factory=list)
+    independent_support: set[int] = field(default_factory=set)
 
 
 # Only schema identifiers survive diagnostic previews. All values/free prose are
@@ -179,7 +183,12 @@ def _schema(model, data, *, step: str, raw: str, status: int | None = None):
         raise InvalidAPIResponse(step) from None
 
 
-def _result(status: VerificationStatus, reason: str, claims: list[VerifiedClaim] | None = None) -> dict[str, object]:
+def _result(
+    status: VerificationStatus, reason: str, claims: list[VerifiedClaim] | None = None,
+    *, evidence_link_unreadable: bool = False,
+) -> dict[str, object]:
+    if evidence_link_unreadable and isinstance(reason, str) and "evidence_link_unreadable" not in reason.split("; "):
+        reason = f"{reason}; evidence_link_unreadable"
     data = {"status": status, "reason": reason, "claims": claims or []}
     raw = json.dumps(data, default=lambda value: value.model_dump() if isinstance(value, BaseModel) else "[unsupported]")
     return _schema(VerificationResult, data, step="final_result", raw=raw).model_dump()
@@ -187,8 +196,8 @@ def _result(status: VerificationStatus, reason: str, claims: list[VerifiedClaim]
 
 def _pending(reason: str, progress: VerificationProgress) -> dict[str, object]:
     if any(claim.verdict == "contradicted" for claim in progress.claims):
-        return _result("rejected", "contradicted_claim", progress.claims)
-    return _result("verification_pending", reason, progress.claims)
+        return _result("rejected", "contradicted_claim", progress.claims, evidence_link_unreadable=progress.evidence_link_unreadable)
+    return _result("verification_pending", reason, progress.claims, evidence_link_unreadable=progress.evidence_link_unreadable)
 
 
 def _remember_claims(data: object, progress: VerificationProgress) -> None:
@@ -220,6 +229,18 @@ def _is_source_url(value: str) -> bool:
         )
     except ValueError:
         return False
+
+
+def _source_identity(value: str | None) -> tuple | None:
+    """Treat tracking queries, fragments and HTTP(S) variants as the same page."""
+    if not value or not _is_source_url(value):
+        return None
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port if parsed.port not in {80, 443} else None
+        return parsed.hostname.lower(), port, unquote(parsed.path).rstrip("/") or "/"
+    except ValueError:
+        return None
 
 
 def _precheck(achievement: AchievementInput) -> dict[str, object] | None:
@@ -331,7 +352,7 @@ async def _search(client: httpx.AsyncClient, claim: str, index: int) -> list[Tav
     return result.results
 
 
-async def _extract(client: httpx.AsyncClient, url: str) -> list[TavilyResult]:
+async def _extract(client: httpx.AsyncClient, url: str) -> TavilyResponse:
     # Only Tavily receives the URL. This server never downloads student-supplied URLs.
     step = "tavily.extract"
     response = await _post(
@@ -348,9 +369,8 @@ async def _extract(client: httpx.AsyncClient, url: str) -> list[TavilyResult]:
     if not result.results:
         _warn(f"{step}.results", "empty_list", response.text, response.status_code)
     if result.failed_results:
-        _warn(f"{step}.failed_results", "extraction_failed", response.text, response.status_code)
-        raise InvalidAPIResponse(step)
-    return result.results
+        _warn(f"{step}.failed_results", "evidence_link_unreadable", response.text, response.status_code)
+    return result
 
 
 async def _parallel(*operations):
@@ -385,6 +405,20 @@ async def _assess(client: httpx.AsyncClient, claim: str, results: list[TavilyRes
         raise InvalidAPIResponse(step)
     allowed_sources = {item["url"] for item in evidence}
     sources = list(dict.fromkeys(url for url in assessment.sources if _is_source_url(url) and url in allowed_sources))
+    if progress.evidence_link_unreadable:
+        search_results = progress.search_evidence[index]
+        independent = {
+            result.url for result in search_results
+            if _source_identity(result.url) is not None
+            and _source_identity(result.url) != _source_identity(progress.evidence_link)
+            and (result.content.strip() or (result.raw_content or "").strip())
+        }
+        # Only the model's actual citations can establish independent support.
+        # Candidate search links below must never promote an unverified claim.
+        if assessment.verdict == "verified" and assessment.confidence >= 0.7 and independent.intersection(sources):
+            progress.independent_support.add(index)
+        if not sources:
+            sources = list(dict.fromkeys(result.url for result in search_results if _is_source_url(result.url)))[:20]
     checked = _schema(VerifiedClaim, {
         "text": claim, "verdict": assessment.verdict, "confidence": assessment.confidence, "sources": sources,
     }, step=f"{step}.assembly", raw=content, status=http_status)
@@ -417,17 +451,33 @@ async def _verify(client: httpx.AsyncClient, achievement: AchievementInput, prog
     if has_link:
         operations.append(_extract(client, achievement.evidence_link))
     evidence = await _parallel(*operations)
-    extracted = evidence[-1] if has_link else []
+    progress.search_evidence = evidence[:len(claims)]
+    progress.evidence_link = achievement.evidence_link
+    extract_result = evidence[-1] if has_link else None
+    extracted = extract_result.results if extract_result is not None else []
+    if extract_result is not None:
+        progress.evidence_link_unreadable = bool(extract_result.failed_results) or not any(
+            _is_source_url(result.url) and (result.content.strip() or (result.raw_content or "").strip())
+            for result in extracted
+        )
+    if progress.evidence_link_unreadable:
+        # Keep the fetched search links even if a later assessment has a real
+        # API failure. These are candidates, not proof of independent support.
+        for index, search_results in enumerate(progress.search_evidence):
+            sources = list(dict.fromkeys(result.url for result in search_results if _is_source_url(result.url)))[:20]
+            progress.claims[index] = progress.claims[index].model_copy(update={"sources": sources})
     progress.step = "claim_assessment"
     checked = await _parallel(*(
         _assess(client, claim, evidence[index] + extracted, index, progress) for index, claim in enumerate(claims)
     ))
     progress.step = "final_assembly"
     if any(claim.verdict == "contradicted" for claim in checked):
-        return _result("rejected", "contradicted_claim", checked)
+        return _result("rejected", "contradicted_claim", checked, evidence_link_unreadable=progress.evidence_link_unreadable)
     if all(claim.verdict == "verified" and claim.confidence >= 0.7 for claim in checked):
-        return _result("verified", "claims_verified", checked)
-    return _result("needs_review", "insufficient_evidence", checked)
+        if progress.evidence_link_unreadable and len(progress.independent_support) != len(checked):
+            return _result("needs_review", "evidence_link_unreadable", checked)
+        return _result("verified", "claims_verified", checked, evidence_link_unreadable=progress.evidence_link_unreadable)
+    return _result("needs_review", "insufficient_evidence", checked, evidence_link_unreadable=progress.evidence_link_unreadable)
 
 
 async def verify_achievement(

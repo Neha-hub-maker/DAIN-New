@@ -82,7 +82,7 @@ async function fixture(t, options={}) {
       assert.equal(request.headers().authorization, 'Bearer browser-test-token');
       if (options.mode === 'timeout') return;
       if (options.mode === 'network') return route.abort('connectionrefused');
-      const body = options.mode === 'invalid_json' ? 'not json' : options.mode === 'invalid_schema' ? '{}' : options.mode === 'http' ? '{"detail":"DO_NOT_LOG_RESPONSE browser-test-token"}' : JSON.stringify(result(options.status));
+      const body = options.mode === 'invalid_json' ? 'not json' : options.mode === 'invalid_schema' ? '{}' : options.mode === 'http' ? '{"detail":"DO_NOT_LOG_RESPONSE browser-test-token"}' : JSON.stringify(options.response || result(options.status));
       return route.fulfill({status:options.httpStatus || 200, headers:options.mode === 'cors' ? {'access-control-allow-origin':'https://unlisted.example.test'} : cors, contentType:'application/json', body});
     }
     if (url.origin === FRONTEND && url.pathname === '/DAIN-New/index.html') return route.fulfill({contentType:'text/html', body:html});
@@ -182,6 +182,42 @@ for (const status of ['verified', 'needs_review', 'verification_pending', 'rejec
     assert.equal(story.status, {verified:'Approved', rejected:'Rejected'}[status] || 'Pending Review');
     assert.deepEqual(story.verification, result(status));
     assert.equal(await page.locator('#verification-health-banner').evaluate(element => element.hidden), true);
+    assert.deepEqual(errors, []);
+  });
+}
+
+for (const status of ['needs_review', 'verified']) {
+  test('unreadable link with search evidence is explained for ' + status, async t => {
+    const response = result(status);
+    response.reason = (status === 'verified' ? 'claims_verified' : 'insufficient_evidence') + '; evidence_link_unreadable';
+    response.claims[0].confidence = status === 'verified' ? 0.9 : 0.6;
+    const {page, errors} = await fixture(t, {response});
+    const story = await submit(page);
+    assert.equal(story.status, status === 'verified' ? 'Approved' : 'Pending Review');
+    assert.deepEqual(story.verification, response);
+    const results = await page.locator('#verification-results').textContent();
+    assert.ok(results.includes(status === 'verified'
+      ? "We couldn't open your evidence link; independent search sources support the claims."
+      : "We couldn't open your evidence link; editorial review required"));
+    assert.ok(!results.includes('invalid_api_response'));
+    assert.ok(!results.includes('evidence_link_unreadable'));
+    assert.ok(!results.includes('Not found online'));
+    assert.ok(!results.includes('No eligible source links'));
+    assert.ok(results.includes(status === 'verified' ? '90%' : '60%'));
+    const link = page.locator('#verification-results .verification-sources a');
+    assert.equal(await link.getAttribute('href'), response.claims[0].sources[0]);
+    assert.equal(await link.getAttribute('target'), '_blank');
+    assert.equal(await link.getAttribute('rel'), 'noopener noreferrer');
+    if (status === 'needs_review') {
+      assert.ok(results.includes('Not independently verified'));
+      assert.equal(await page.locator('#verification-results .claim-badge').evaluate(element => getComputedStyle(element).color), 'rgb(71, 85, 105)');
+      assert.ok(!(await page.locator('#toast-message').textContent()).includes('syndicated'));
+      await page.evaluate(id => openPressKit(id), story.id);
+      await page.waitForFunction(() => !document.querySelector('#dialog-body').classList.contains('hidden'));
+      assert.ok((await page.locator('#dialog-body').textContent()).includes("We couldn't open your evidence link; editorial review required"));
+    } else {
+      assert.ok(!results.includes('editorial review required'));
+    }
     assert.deepEqual(errors, []);
   });
 }

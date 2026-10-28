@@ -2168,10 +2168,10 @@
         toastTimeout = setTimeout(() => toast.classList.remove("show"), 3200);
       };
 
-      function claimPresentation(verdict) {
+      function claimPresentation(verdict, hasSources = false) {
         if (verdict === "verified") return ["Verified", "claim-verified"];
         if (verdict === "contradicted") return ["Contradicted", "claim-contradicted"];
-        return ["Not found online", "claim-unverified"];
+        return [hasSources ? "Not independently verified" : "Not found online", "claim-unverified"];
       }
 
       function safeSourceURL(value) {
@@ -2190,13 +2190,20 @@
         }
         const claims = Array.isArray(verification.claims) ? verification.claims.filter(claim => claim && typeof claim === "object") : [];
         const failureMessage = typeof verification.failureMessage === "string" ? verification.failureMessage : "";
+        const reasons = typeof verification.reason === "string" ? verification.reason.split(";").map(reason => reason.trim()) : [];
+        const unreadableLink = reasons.includes("evidence_link_unreadable");
+        const linkMessage = verification.status === "verified"
+          ? "We couldn't open your evidence link; independent search sources support the claims."
+          : "We couldn't open your evidence link; editorial review required";
+        const overallReason = reasons.filter(reason => reason !== "evidence_link_unreadable").join("; ");
         return `<div class="verification-summary">
           <h4>Verification results</h4>
-          <p class="verification-reason"><strong>Overall reason:</strong> ${escapeHTML(failureMessage || verification.reason || "No reason provided.")}</p>
+          <p class="verification-reason"><strong>Overall reason:</strong> ${escapeHTML(failureMessage || overallReason || (unreadableLink ? linkMessage : "No reason provided."))}</p>
+          ${unreadableLink && overallReason ? `<p class="verification-reason">${escapeHTML(linkMessage)}</p>` : ""}
           ${claims.length ? `<ol class="verification-claims">${claims.map(claim => {
-            const [label, badgeClass] = claimPresentation(claim.verdict);
-            const confidence = Number.isFinite(claim.confidence) && claim.confidence >= 0 && claim.confidence <= 1 ? `${Math.round(claim.confidence * 100)}%` : "Not available";
             const sources = [...new Set((Array.isArray(claim.sources) ? claim.sources : []).map(safeSourceURL).filter(Boolean))];
+            const [label, badgeClass] = claimPresentation(claim.verdict, sources.length > 0);
+            const confidence = Number.isFinite(claim.confidence) && claim.confidence >= 0 && claim.confidence <= 1 ? `${Math.round(claim.confidence * 100)}%` : "Not available";
             return `<li class="verification-claim">
               <div class="claim-meta"><span class="claim-badge ${badgeClass}">${escapeHTML(label)}</span><span>Confidence: ${escapeHTML(confidence)}</span></div>
               <p>${escapeHTML(claim.text)}</p>
@@ -2666,7 +2673,7 @@
               results.hidden = false;
               appendPipelineLog(`VERIFICATION • ${verification.status}: ${verification.reason}`);
               await animatePipeline(verification.stages);
-              verification.claims.forEach(claim => appendPipelineLog(`CLAIM • ${claimPresentation(claim.verdict)[0]} (${Math.round(claim.confidence * 100)}%): ${claim.text}`));
+              verification.claims.forEach(claim => appendPipelineLog(`CLAIM • ${claimPresentation(claim.verdict, claim.sources.some(safeSourceURL))[0]} (${Math.round(claim.confidence * 100)}%): ${claim.text}`));
               const status = verification.status === "verified" ? "Approved" : (verification.status === "rejected" ? "Rejected" : "Pending Review");
               const newStory = {
                 id: createStoryId(), headline: payload.headline, summary: payload.summary,
