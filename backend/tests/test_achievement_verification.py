@@ -32,6 +32,10 @@ def achievement_payload(**overrides):
     return payload
 
 
+def unfinished_claim(text=CLAIM):
+    return {"text": text, "verdict": "unverified", "confidence": 0.0, "sources": []}
+
+
 def untrusted_payload(request):
     messages = json.loads(request.content)["messages"]
     return json.loads(messages[1]["content"].split("\n", 1)[1].rsplit("\n", 1)[0])
@@ -283,19 +287,27 @@ def test_overall_deadline_is_pending_and_cancels_work(providers, monkeypatch, st
                 raise
 
     providers.override = stall
-    assert verify() == {"status": "verification_pending", "reason": "timeout", "claims": []}
+    result = verify()
+    assert result == {
+        "status": "verification_pending", "reason": "timeout",
+        "claims": [] if stage == "extraction" else [unfinished_claim()],
+    }
     assert cancelled == [stage]
 
 
 @pytest.mark.parametrize("url", [verification.GROQ_URL, verification.TAVILY_SEARCH_URL, verification.TAVILY_EXTRACT_URL])
 @pytest.mark.parametrize("status,reason", [(429, "rate_limited"), (500, "api_error")])
-def test_http_errors_are_pending(providers, url, status, reason):
+def test_http_errors_are_pending(providers, caplog, url, status, reason):
     async def error_response(request):
         if str(request.url) == url:
             return httpx.Response(status, json={"error": "Provider unavailable"})
 
     providers.override = error_response
-    assert verify(evidence_link=EVIDENCE_LINK) == {"status": "verification_pending", "reason": reason, "claims": []}
+    assert verify(evidence_link=EVIDENCE_LINK) == {
+        "status": "verification_pending", "reason": reason,
+        "claims": [] if url == verification.GROQ_URL else [unfinished_claim()],
+    }
+    assert f"reason=http_error http_status={status}" in caplog.text
 
 
 def test_transport_timeout_is_pending(providers):
@@ -331,7 +343,7 @@ def test_invalid_extraction_json_is_pending(providers, extraction):
 def test_invalid_assessment_json_is_pending(providers, changes):
     providers.assessments[CLAIM] = {"claim": CLAIM, "verdict": "verified", "confidence": 0.9, "sources": [SOURCE], **changes}
     result = verify()
-    assert result == {"status": "verification_pending", "reason": "invalid_api_response", "claims": []}
+    assert result == {"status": "verification_pending", "reason": "invalid_api_response", "claims": [unfinished_claim()]}
 
 
 def test_malformed_provider_response_is_pending(providers):
@@ -345,3 +357,346 @@ def test_malformed_provider_response_is_pending(providers):
 def test_invalid_input_is_pending_without_external_calls(providers):
     assert verify(achievement_date="not-a-date")["reason"] == "invalid_input"
     assert providers.requests == []
+
+
+def service_warnings(caplog):
+    return [record for record in caplog.records if record.name == verification.__name__]
+
+
+def completion(content=None, **fields):
+    return httpx.Response(200, json={"choices": [{"message": {"content": content, **fields}}]})
+
+
+@pytest.mark.parametrize("field", ["content", "reasoning", "reasoning_content"])
+@pytest.mark.parametrize("wrapper", ["{}", "```json\n{}\n```", "Result:\n{}\nEnd.", '<think>Ignore this {{"example": true}}</think>\n{}'])
+def test_fenced_json_prose_and_reasoning_fields_are_accepted(providers, field, wrapper):
+    async def wrapped(request):
+        if str(request.url) == verification.GROQ_URL:
+            data = untrusted_payload(request)
+            payload = providers.extraction if "headline" in data else {
+                "claim": data["claim"], "verdict": "verified", "confidence": 0.9, "sources": [SOURCE],
+            }
+            text = wrapper.format(json.dumps(payload))
+            return completion(**{field: text})
+    providers.override = wrapped
+    result = verify()
+    assert result["status"] == "verified"
+    assert result["claims"][0]["text"] == CLAIM
+
+
+def test_reasoning_field_is_used_when_content_has_no_json(providers):
+    async def reasoning(request):
+        if str(request.url) == verification.GROQ_URL and "headline" in untrusted_payload(request):
+            return completion("See the structured answer.", reasoning=json.dumps(providers.extraction))
+    providers.override = reasoning
+    assert verify()["status"] == "verified"
+
+
+def test_first_json_object_is_authoritative_not_a_later_verdict(providers):
+    async def two_objects(request):
+        if str(request.url) == verification.GROQ_URL and "claim" in untrusted_payload(request):
+            first = {"claim": CLAIM, "verdict": "unverified", "confidence": 0.2, "sources": []}
+            second = {**first, "verdict": "verified", "confidence": 1.0}
+            return completion(json.dumps(first) + "\n" + json.dumps(second))
+    providers.override = two_objects
+    assert verify()["status"] == "needs_review"
+
+
+def test_production_sequence_with_four_claims_and_nullable_tavily_metadata(providers):
+    claims = [CLAIM, SECOND_CLAIM, "The award was presented in Dhaka.", "The team built a rescue robot."]
+    providers.extraction["claims"] = claims
+    for claim in claims:
+        providers.search_results[claim] = [{"url": SOURCE, "title": None, "content": None, "raw_content": None}]
+    providers.extracted_results = [{"url": EVIDENCE_LINK, "title": None, "content": None, "raw_content": "Official announcement."}]
+    result = verify(evidence_link=EVIDENCE_LINK)
+    assert result["status"] == "verified"
+    assert [claim["text"] for claim in result["claims"]] == claims
+    assert len(providers.calls(verification.GROQ_URL)) == 5
+    assert len(providers.calls(verification.TAVILY_SEARCH_URL)) == 4
+    assert len(providers.calls(verification.TAVILY_EXTRACT_URL)) == 1
+
+
+@pytest.mark.parametrize("body,step,why,field", [
+    ({"choices": []}, "claim_extraction.message", "pydantic_validation", "choices"),
+    ({"choices": [{}]}, "claim_extraction.message", "pydantic_validation", "message"),
+    ({"choices": [{"message": {"content": 123}}]}, "claim_extraction.message", "pydantic_validation", "content"),
+    ({"choices": [{"message": {"reasoning": []}}]}, "claim_extraction.message", "pydantic_validation", "reasoning"),
+    ({"choices": [{"message": {"content": None}}]}, "claim_extraction.message", "empty_content", ""),
+    ({"choices": [{"message": {"content": "Nothing structured"}}]}, "claim_extraction.json", "json_object_not_found", ""),
+])
+def test_groq_envelope_failures_identify_the_boundary(providers, caplog, body, step, why, field):
+    async def malformed(request):
+        return httpx.Response(200, json=body)
+    providers.override = malformed
+    assert verify()["reason"] == "invalid_api_response"
+    messages = [record.getMessage() for record in service_warnings(caplog)]
+    assert len(messages) == 1
+    assert f"step={step}" in messages[0] and f"reason={why}" in messages[0]
+    assert "http_status=200" in messages[0]
+    assert field in messages[0]
+
+
+@pytest.mark.parametrize("phase", ["claim_extraction", "claim_assessment[0]"])
+@pytest.mark.parametrize("payload", ['not JSON', '{"claims":', '[1, 2, 3]'])
+def test_model_json_parse_failures_are_logged_and_keep_previous_claims(providers, caplog, phase, payload):
+    async def malformed(request):
+        if str(request.url) == verification.GROQ_URL:
+            is_extraction = "headline" in untrusted_payload(request)
+            if is_extraction == (phase == "claim_extraction"):
+                return completion(payload)
+    providers.override = malformed
+    result = verify()
+    assert result["reason"] == "invalid_api_response"
+    assert result["claims"] == ([] if phase == "claim_extraction" else [unfinished_claim()])
+    assert f"step={phase}.json" in caplog.text
+
+
+@pytest.mark.parametrize("target,step", [
+    (verification.GROQ_URL, "claim_extraction.response_json"),
+    (verification.TAVILY_SEARCH_URL, "tavily.search[0].response_json"),
+    (verification.TAVILY_EXTRACT_URL, "tavily.extract.response_json"),
+])
+def test_provider_envelope_json_failures_are_logged(providers, caplog, target, step):
+    async def malformed(request):
+        if str(request.url) == target:
+            return httpx.Response(200, text="broken provider JSON")
+    providers.override = malformed
+    result = verify(evidence_link=EVIDENCE_LINK)
+    assert result["reason"] == "invalid_api_response"
+    assert f"step={step} reason=json_parse_error http_status=200" in caplog.text
+    assert result["claims"] == ([] if target == verification.GROQ_URL else [unfinished_claim()])
+
+
+@pytest.mark.parametrize("target,step", [
+    (verification.TAVILY_SEARCH_URL, "tavily.search[0].results"),
+    (verification.TAVILY_EXTRACT_URL, "tavily.extract.results"),
+])
+@pytest.mark.parametrize("payload,field", [
+    ({}, "results"), ({"results": None}, "results"),
+    ({"results": [{}]}, "results.0.url"),
+    ({"results": [{"url": SOURCE, "title": {}}]}, "results.0.title"),
+    ({"results": [{"url": SOURCE, "raw_content": []}]}, "results.0.raw_content"),
+    ({"results": [], "failed_results": "invalid"}, "failed_results"),
+])
+def test_tavily_schema_failures_are_logged_without_losing_claims(providers, caplog, target, step, payload, field):
+    async def malformed(request):
+        if str(request.url) == target:
+            return httpx.Response(200, json=payload)
+    providers.override = malformed
+    result = verify(evidence_link=EVIDENCE_LINK)
+    assert result == {"status": "verification_pending", "reason": "invalid_api_response", "claims": [unfinished_claim()]}
+    assert f"step={step} reason=pydantic_validation http_status=200" in caplog.text
+    assert field in caplog.text
+
+
+def test_failed_extraction_is_diagnosed_and_keeps_claims(providers, caplog):
+    async def failed(request):
+        if str(request.url) == verification.TAVILY_EXTRACT_URL:
+            return httpx.Response(200, json={"results": [], "failed_results": [{"url": EVIDENCE_LINK, "error": "Unavailable"}]})
+    providers.override = failed
+    result = verify(evidence_link=EVIDENCE_LINK)
+    assert result["reason"] == "invalid_api_response"
+    assert result["claims"] == [unfinished_claim()]
+    assert "step=tavily.extract.results reason=empty_list" in caplog.text
+    assert "step=tavily.extract.failed_results reason=extraction_failed" in caplog.text
+    assert EVIDENCE_LINK not in "\n".join(record.getMessage() for record in service_warnings(caplog))
+
+
+def test_empty_evidence_is_a_normal_unverified_outcome_with_diagnostics(providers, caplog):
+    providers.search_results[CLAIM] = []
+    providers.extracted_results = []
+    providers.assessments[CLAIM] = {"claim": CLAIM, "verdict": "unverified", "confidence": 0.1, "sources": []}
+    result = verify(evidence_link=EVIDENCE_LINK)
+    assert result["status"] == "needs_review"
+    assert "step=tavily.search[0].results reason=empty_list" in caplog.text
+    assert "step=tavily.extract.results reason=empty_list" in caplog.text
+
+
+@pytest.mark.parametrize("payload,field", [
+    ({"coherent": "true", "claims": [CLAIM]}, "coherent"),
+    ({"coherent": True, "claims": [CLAIM, None]}, "claims.1"),
+])
+def test_bad_extraction_keeps_valid_text_and_logs_field_names(providers, caplog, payload, field):
+    providers.extraction = payload
+    result = verify()
+    assert result["reason"] == "invalid_api_response"
+    assert result["claims"] == [unfinished_claim()]
+    assert "step=claim_extraction.schema reason=pydantic_validation" in caplog.text
+    assert field in caplog.text
+
+
+def test_empty_claims_remain_rejected_and_are_diagnosed(providers, caplog):
+    providers.extraction["claims"] = []
+    assert verify()["status"] == "rejected"
+    assert "step=claim_extraction.claims reason=empty_list" in caplog.text
+
+
+@pytest.mark.parametrize("changes,field,why", [
+    ({"verdict": "false"}, "verdict", "pydantic_validation"),
+    ({"confidence": "0.9"}, "confidence", "pydantic_validation"),
+    ({"confidence": 2}, "confidence", "pydantic_validation"),
+    ({"sources": None}, "sources", "pydantic_validation"),
+    ({"claim": "Different claim"}, "claim", "original_claim_mismatch"),
+])
+def test_assessment_schema_and_identity_failures_are_diagnosed(providers, caplog, changes, field, why):
+    providers.assessments[CLAIM] = {"claim": CLAIM, "verdict": "verified", "confidence": 0.9, "sources": [SOURCE], **changes}
+    result = verify()
+    assert result["reason"] == "invalid_api_response"
+    assert result["claims"] == [unfinished_claim()]
+    assert "step=claim_assessment[0]" in caplog.text
+    assert f"reason={why}" in caplog.text and field in caplog.text
+
+
+@pytest.mark.parametrize("first_verdict,expected_status", [("verified", "verification_pending"), ("contradicted", "rejected")])
+def test_completed_assessments_survive_a_sibling_failure(providers, monkeypatch, first_verdict, expected_status):
+    providers.extraction["claims"] = [CLAIM, SECOND_CLAIM]
+    providers.assessments[CLAIM] = {"claim": CLAIM, "verdict": first_verdict, "confidence": 0.9, "sources": [SOURCE]}
+
+    async def run():
+        finished = asyncio.Event()
+        original = verification._assess
+
+        async def assess(*args):
+            result = await original(*args)
+            if result.text == CLAIM:
+                finished.set()
+            return result
+
+        async def malformed_second(request):
+            if str(request.url) == verification.GROQ_URL and untrusted_payload(request).get("claim") == SECOND_CLAIM:
+                await asyncio.wait_for(finished.wait(), timeout=1)
+                return completion('{"verdict": "unsupported"}')
+
+        monkeypatch.setattr(verification, "_assess", assess)
+        providers.override = malformed_second
+        return await verification.verify_achievement(**achievement_payload())
+
+    result = asyncio.run(run())
+    assert result["status"] == expected_status
+    assert result["claims"] == [
+        {"text": CLAIM, "verdict": first_verdict, "confidence": 0.9, "sources": [SOURCE]}, unfinished_claim(SECOND_CLAIM),
+    ]
+
+
+def test_final_result_schema_failure_is_logged_and_preserves_progress(providers, monkeypatch, caplog):
+    original = verification._verify
+
+    async def bad_final(*args):
+        await original(*args)
+        return verification._result("verified", None, args[2].claims)
+
+    monkeypatch.setattr(verification, "_verify", bad_final)
+    result = verify()
+    assert result["status"] == "verification_pending"
+    assert result["reason"] == "invalid_api_response"
+    assert result["claims"][0]["verdict"] == "verified"
+    assert "step=final_result reason=pydantic_validation" in caplog.text
+    assert "reason(string_type)" in caplog.text
+
+
+def test_warning_preview_masks_story_claims_credentials_emails_and_unknown_fields(providers, caplog):
+    sensitive = [
+        "test-groq-key", "test-tavily-key", "Bearer secret-session-token", "student@cs.du.ac.bd",
+        achievement_payload()["summary"], achievement_payload()["headline"], CLAIM,
+    ]
+    raw = json.dumps({"choices": [{"message": {"content": 123, "claims": sensitive}}], sensitive[3]: sensitive})
+
+    async def unsafe(request):
+        return httpx.Response(200, text=raw)
+
+    providers.override = unsafe
+    assert verify()["reason"] == "invalid_api_response"
+    records = service_warnings(caplog)
+    assert records
+    for record in records:
+        message = record.getMessage()
+        assert all(value not in message for value in sensitive)
+        assert len(message.split("preview=", 1)[1]) <= 300
+        assert "[redacted]" in message
+        assert not record.exc_info
+
+
+@pytest.mark.parametrize("raw", [
+    'student@cs.du.ac.bd Bearer secret-session-token test-groq-key',
+    '{"content":"' + "private text " * 100 + '\\',
+    '{"unknown-email@example.test": "private", "claims": ["private story"]}',
+    '```json\n{"coherent": true, "claims": ["private story"]}\n```',
+])
+def test_preview_redacts_values_and_is_single_line_bounded(raw):
+    preview = verification._safe_preview(raw)
+    assert len(preview) <= 300 and "\n" not in preview
+    for value in ["private", "student@cs.du.ac.bd", "secret-session-token", "test-groq-key", "unknown-email@example.test"]:
+        assert value not in preview
+
+
+def test_nullable_failed_results_is_accepted(providers):
+    async def null_failures(request):
+        if str(request.url) == verification.TAVILY_EXTRACT_URL:
+            return httpx.Response(200, json={"results": providers.extracted_results, "failed_results": None})
+    providers.override = null_failures
+    assert verify(evidence_link=EVIDENCE_LINK)["status"] == "verified"
+
+
+def test_untrusted_extra_field_names_are_redacted_in_pydantic_locations(providers, caplog):
+    private_name = "student-secret@example.test"
+    providers.extraction[private_name] = "test-groq-key"
+    assert verify()["reason"] == "invalid_api_response"
+    messages = "\n".join(record.getMessage() for record in service_warnings(caplog))
+    assert "[field](extra_forbidden)" in messages
+    assert private_name not in messages and "test-groq-key" not in messages
+
+
+def test_assessment_message_envelope_failure_has_the_claim_index(providers, caplog):
+    async def malformed_assessment(request):
+        if str(request.url) == verification.GROQ_URL and "claim" in untrusted_payload(request):
+            return httpx.Response(200, json={"choices": []})
+    providers.override = malformed_assessment
+    assert verify()["claims"] == [unfinished_claim()]
+    assert "step=claim_assessment[0].message reason=pydantic_validation" in caplog.text
+
+
+def test_claim_assembly_guard_is_diagnosed_without_losing_extracted_text(providers, monkeypatch, caplog):
+    original = verification._schema
+
+    def corrupt_assembly(model, data, **kwargs):
+        if kwargs["step"] == "claim_assessment[0].assembly":
+            data = {**data, "verdict": "unsupported"}
+        return original(model, data, **kwargs)
+
+    monkeypatch.setattr(verification, "_schema", corrupt_assembly)
+    result = verify()
+    assert result["reason"] == "invalid_api_response"
+    assert result["claims"] == [unfinished_claim()]
+    assert "step=claim_assessment[0].assembly reason=pydantic_validation" in caplog.text
+
+
+@pytest.mark.parametrize("error", [ValueError, TypeError, KeyError])
+def test_unexpected_response_errors_are_reported_without_exception_text(providers, monkeypatch, caplog, error):
+    original = verification._assess
+
+    async def fail_after_a_valid_assessment(*args):
+        await original(*args)
+        raise error("private-error student@example.test test-groq-key")
+
+    monkeypatch.setattr(verification, "_assess", fail_after_a_valid_assessment)
+    result = verify()
+    assert result["reason"] == "invalid_api_response"
+    assert result["claims"][0]["verdict"] == "verified"
+    messages = "\n".join(record.getMessage() for record in service_warnings(caplog))
+    assert "step=claim_assessment reason=unexpected_response_type" in messages
+    assert all(value not in messages for value in ["private-error", "student@example.test", "test-groq-key"])
+
+
+@pytest.mark.parametrize("phase", ["claim_extraction", "claim_assessment[0]"])
+def test_model_schema_diagnostics_report_the_actual_http_status(providers, caplog, phase):
+    async def created_but_invalid(request):
+        if str(request.url) == verification.GROQ_URL:
+            is_extraction = "headline" in untrusted_payload(request)
+            if is_extraction == (phase == "claim_extraction"):
+                payload = {"coherent": "true", "claims": [CLAIM]} if is_extraction else {
+                    "claim": CLAIM, "verdict": "verified", "confidence": "not a number", "sources": [],
+                }
+                return httpx.Response(201, json={"choices": [{"message": {"content": json.dumps(payload)}}]})
+    providers.override = created_but_invalid
+    assert verify()["reason"] == "invalid_api_response"
+    assert f"step={phase}.schema reason=pydantic_validation http_status=201" in caplog.text
